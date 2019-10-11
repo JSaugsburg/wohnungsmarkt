@@ -1,0 +1,13 @@
+Will not apply HSTS. The HSTS database must be a regular and non-world-writable file.
+ERROR: could not open HSTS store at '/home/sepp/.wget-hsts'. HSTS will be disabled.
+--2019-10-03 00:46:18--  https://www.wg-gesucht.de/t_ph.html?qrup=grap36
+Resolving www.wg-gesucht.de (www.wg-gesucht.de)... 159.69.70.79, 159.69.70.78, 138.201.98.175, ...
+Connecting to www.wg-gesucht.de (www.wg-gesucht.de)|159.69.70.79|:443... connected.
+HTTP request sent, awaiting response... 200 OK
+Length: 0 [text/html]
+Saving to: ‘alex.jpg’
+
+alex.jpg                 [<=>                  ]       0  --.-KB/s               alex.jpg                 [ <=>                 ]       0  --.-KB/s    in 0s      
+
+2019-10-03 00:46:18 (0.00 B/s) - ‘alex.jpg’ saved [0/0]
+
