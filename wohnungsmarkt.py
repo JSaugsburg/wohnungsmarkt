@@ -34,7 +34,9 @@ class WohnungsMarkt:
         if r.status_code == 200:
             return r
         else:
-            raise requests.HTTPError(f"Request failed with status_code {r.status_code}")
+            raise requests.HTTPError(
+                f"Request failed with status_code {r.status_code}"
+            )
 
 
 class WgGesucht(WohnungsMarkt):
@@ -61,8 +63,8 @@ class WgGesucht(WohnungsMarkt):
         # store current page content
         self.soup = None
         self.urls = []
-        self.get_string = self.url + self.wtype_dict[wtype] + "-in-" + stadt + "." \
-        + self.city_codes[stadt] + ".0.0." + f"{self.p_cnt}" + ".html"
+        self.get_string = self.url + self.wtype_dic[wtype] + "-in-" + stadt \
+        + "." + self.city_codes[stadt] + ".0.0." + f"{self.p_cnt}" + ".html"
 
     def http_get_to_soup(self, url):
         """
@@ -96,6 +98,7 @@ class WgGesucht(WohnungsMarkt):
         page_bar = soup.find_all("ul", class_="pagination pagination-sm")[0]
         page_counter = page_bar.find_all("li")[-2].get_text().strip()
         self.p_cnt = page_counter
+
         return page_counter
 
     def get_urls(self, soup):
@@ -110,12 +113,29 @@ class WgGesucht(WohnungsMarkt):
         # wgs list from "main column"
         wgs_body = soup.find("div", id="main_column").table.tbody.find_all("tr")
         # filter out AirBnb offers
-        wgs = [x.find("td", class_="ang_spalte_datum row_click") for x in wgs_body]
+        wgs = [
+            x.find("td", class_="ang_spalte_datum row_click") for x in wgs_body
+        ]
         # filter out None Types
         wgs_filter = list(filter(None, wgs))
         self.urls = ["https://www." + x.a["href"] for x in wgs_filter]
 
         return urls
+
+    def get_title(self, soup=self.soup):
+        """
+
+        Get Title of wg offer
+        :soup: BeautifulSoup object
+        :returns: title (string)
+
+        """
+
+        main = soup.find("div", id="main_column")
+        # get title
+        title = main.find("h1", class_=re.compile("^headline")).text.strip()
+
+        return title
 
     def parse_wgs(self, wg_url):
         """
@@ -129,7 +149,17 @@ class WgGesucht(WohnungsMarkt):
 
         """
 
-        soup = self.http_get_to_soup(wg_url)
+    def get_contact(self, soup=self.soup):
+        """
+
+        Get contac information
+        (Phone number, picture, ...)
+
+        :soup: BeautifulSoup object
+        :returns: TODO
+
+        """
+
         # TODO kontakte mit reinnehmen??
         # Problem: Name und Handynr werden NICHT im Klartext angezeigt
         # # get contact info
@@ -156,10 +186,6 @@ class WgGesucht(WohnungsMarkt):
         #     contact_panel.find("div", class_="col-md-8")
         # )[4].strip()
 
-        main = soup.find("div", id="main_column")
-        # get title
-        title = main.find("h1", class_=re.compile("^headline")).text.strip()
-
         # get images of wg-object
         # TODO bei request wird nur 1 Bild angezeigt -> Versuchen alle Bilder
         # zu extrahieren!
@@ -167,11 +193,30 @@ class WgGesucht(WohnungsMarkt):
         img_link = soup.head.find("link", rel="image_src").get("href")
         img_raw = self.http_get(img_link).content
 
+        return
+
+    def get_address(self, soup=self.soup):
+        """
+
+        Retrieve address of wg
+        address is hidden in link ("a")
+
+        :soup: BeautifulSoup object
+        :returns: address dictionary
+                 {
+                "street": ...,
+                "house_number": ...,
+                "plz": ...,
+                "viertel": ...
+                }
+
+        """
+
         # get address; hidden in link ("a")
         adress_strings = soup.find("div", class_"col-sm-4 mb10").text.strip()
         # parse for "newline" and split
         adress_list = [
-            x.strip() for x in adress.split("\n") if x.strip() is not ""
+            x.strip() for x in adress.splitlines() if x.strip() is not ""
         ]
         # street and house number
         # extract house number; house number is not mandatory!
@@ -185,6 +230,22 @@ class WgGesucht(WohnungsMarkt):
             street = " ".join(adress_list[1].split(" "))
         plz = adress_list[2].split(" ")[0]
         viertel = " ".join(adress_list[2].split(" ")[2:])
+
+        return {
+            "street": street,
+            "house_number": house_number,
+            "plz": plz,
+            "viertel": viertel
+        }
+
+    def get_basic_facts(self, soup=self.soup):
+        """TODO: Docstring for get_basic_facts.
+
+        :soup: TODO
+        :returns: TODO
+
+        """
+        pass
 
         # basic facts
         basic = soup.find("div", id="basic_facts_wrapper")
@@ -222,7 +283,7 @@ class WgGesucht(WohnungsMarkt):
         # Indices: 0->sonstiges;1->Nebenkosten;2->Miete;3->Gesamt
         rent_list = []
         for e in cost_html_elements:
-            text = e.text.strip().split("\n")[0].replace("€", "")
+            text = e.text.strip().splitlines()[0].replace("€", "")
             rent_list.append(None if text == "n.a." else text)
         # kaution
         provision_eq = basic.find_all("div", class_="provision-equipment")
@@ -232,3 +293,48 @@ class WgGesucht(WohnungsMarkt):
         # Abstandszahlung
         abst = provision_eq[1].find("label").text.strip()
         abst = None if abst == "n.a." else abst.replace("€", "")
+
+        # angaben zum objekt
+        angaben_row = soup.find_all("div", class_="row")[13].find("div")
+        angaben = angaben_row.find("div")
+        # filter hidden div tags and div tags that have a span tag
+        a_filtered = [
+            x for x in angaben.find_all("div") if (
+                x.span and not "aria-hidden" in x.span.attrs
+            )
+        ]
+        # create dict of items
+        angaben_dict = dict([
+            (x.span.attrs["class"][1].split("-", 1)[1],
+             " ".join(x.text.replace("\n", "").strip().split())
+             ) for x in a_filtered
+        ])
+
+        # wg-details
+        details = soup.find_all("div", class_="row")[11]
+        d_list = [
+            " ".join(x.text.strip().replace("\n", "").split()) for x in
+                  details.find_all("li")
+        ]
+        # "Bewohneralter" is optional; so insert None at given position
+        d_list = [(x if x is not "" else None) for x in d_list]
+        details_dict = {
+            "wg_size": d_list[0],
+            "wohnung_size": d_list[1],
+            "roommates": d_list[2],
+            "roommate_age": d_list[3],
+            "smoking": d_list[4],
+            "wg_type": d_list[5],
+            "languages": d_list[6],
+            "looking_for": d_list[7]
+        }
+
+        # availability
+        avlblty_row = soup.find_all("div", class_="row")[8]
+        avlblty_p = avlblty_row.p.text.splitlines()
+        avlblty_l = [
+            x.strip() for x in avlblty_p if x.strip() is not ""
+        ]
+        # "frei bis" is optional so check list length
+        avlblty_dict = {"freiAb": avlblty_l[1]}
+        avlblty_dict["freiBis"] = avlblty_l[3] if len(avlblty_l) == 4 else None
