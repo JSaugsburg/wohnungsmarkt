@@ -1,4 +1,5 @@
 from bs4 import BeautifulSoup
+from datetime import datetime, timedelta
 import re
 import requests
 
@@ -11,14 +12,14 @@ class WohnungsMarkt:
 
     """
 
-    self.wtype_dict = {
+    wtype_dict = {
         1: "wg-zimmer",
         2: "1-zimmer-wohnungen",
         3: "wohnungen",
         4: "haeuser"
     }
 
-    self.city_codes = {
+    city_codes = {
         "Augsburg": "2"
     }
 
@@ -63,7 +64,7 @@ class WgGesucht(WohnungsMarkt):
         # store current page content
         self.soup = None
         self.urls = []
-        self.get_string = self.url + self.wtype_dic[wtype] + "-in-" + stadt \
+        self.get_string = self.url + self.wtype_dict[wtype] + "-in-" + stadt \
         + "." + self.city_codes[stadt] + ".0.0." + f"{self.p_cnt}" + ".html"
 
     def http_get_to_soup(self, url):
@@ -77,15 +78,15 @@ class WgGesucht(WohnungsMarkt):
 
         r = self.http_get(url)
         # only allow content type "text/html"
-        if r.headers["Content-Type"] == "text/html":
-            soup = BeautifulSoup(r.text)
+        if "text/html" in r.headers["Content-Type"]:
+            soup = BeautifulSoup(r.text, "lxml")
             self.soup = soup
             return soup
         else:
             print(f"Expected Content Type text/html, but got \
                   {r.headers['Content-Type']} instead")
 
-    def get_page_counter(self, soup):
+    def get_page_counter(self):
         """
 
         gets count of pages available
@@ -94,14 +95,17 @@ class WgGesucht(WohnungsMarkt):
 
         """
 
+        # reset page counter
+        soup = self.http_get_to_soup(self.get_string)
         # find page_bar with numbers of pages
         page_bar = soup.find_all("ul", class_="pagination pagination-sm")[0]
-        page_counter = page_bar.find_all("li")[-2].get_text().strip()
+        page_counter = int(page_bar.find_all("li")[-2].get_text().strip())
         self.p_cnt = page_counter
+        print(f"There are {page_counter} pages available")
 
         return page_counter
 
-    def get_urls(self, soup):
+    def get_urls(self):
         """
 
         Retrieve availabe urls of adverts from main page
@@ -110,6 +114,9 @@ class WgGesucht(WohnungsMarkt):
         :returns: list of urls to available wgs
 
         """
+
+        # get main offer listing
+        soup = self.http_get_to_soup(self.get_string)
         # wgs list from "main column"
         wgs_body = soup.find("div", id="main_column").table.tbody.find_all("tr")
         # filter out AirBnb offers
@@ -118,11 +125,12 @@ class WgGesucht(WohnungsMarkt):
         ]
         # filter out None Types
         wgs_filter = list(filter(None, wgs))
-        self.urls = ["https://www." + x.a["href"] for x in wgs_filter]
+        urls = ["https://www.wg-gesucht.de/" + x.a["href"] for x in wgs_filter]
+        self.urls = urls
 
         return urls
 
-    def get_title(self, soup=self.soup):
+    def get_title(self, soup):
         """
 
         Get Title of wg offer
@@ -148,12 +156,12 @@ class WgGesucht(WohnungsMarkt):
         :returns: TODO
 
         """
+        pass
 
-    def get_contact(self, soup=self.soup):
+    def get_wg_images(self, soup):
         """
 
-        Get contac information
-        (Phone number, picture, ...)
+        Get wg image
 
         :soup: BeautifulSoup object
         :returns: TODO
@@ -189,13 +197,19 @@ class WgGesucht(WohnungsMarkt):
         # get images of wg-object
         # TODO bei request wird nur 1 Bild angezeigt -> Versuchen alle Bilder
         # zu extrahieren!
+
         # Als Uebergangsloesung wird Bild aus Header genommen
         img_link = soup.head.find("link", rel="image_src").get("href")
-        img_raw = self.http_get(img_link).content
+        # wg images are optional
+        # https://img.wg-gesucht.de/ is the default img url
+        if img_link == "https://img.wg-gesucht.de/":
+            img_raw = None
+        else:
+            img_raw = self.http_get(img_link).content
 
-        return
+        return img_raw
 
-    def get_address(self, soup=self.soup):
+    def get_address(self, soup):
         """
 
         Retrieve address of wg
@@ -213,10 +227,10 @@ class WgGesucht(WohnungsMarkt):
         """
 
         # get address; hidden in link ("a")
-        adress_strings = soup.find("div", class_"col-sm-4 mb10").text.strip()
+        address = soup.find("div", class_="col-sm-4 mb10").text.strip()
         # parse for "newline" and split
-        adress_list = [
-            x.strip() for x in adress.splitlines() if x.strip() is not ""
+        address_list = [
+            x.strip() for x in address.splitlines() if x.strip() is not ""
         ]
         # street and house number
         # extract house number; house number is not mandatory!
@@ -238,14 +252,16 @@ class WgGesucht(WohnungsMarkt):
             "viertel": viertel
         }
 
-    def get_basic_facts(self, soup=self.soup):
-        """TODO: Docstring for get_basic_facts.
+    def get_sizes(self, soup):
+        """
 
-        :soup: TODO
+        Get size of wg
+        (room, total)
+
+        :soup: BeautifulSoup object
         :returns: TODO
 
         """
-        pass
 
         # basic facts
         basic = soup.find("div", id="basic_facts_wrapper")
@@ -267,7 +283,7 @@ class WgGesucht(WohnungsMarkt):
             "label",
             class_="description").text.strip()
         # wg size room
-        room_size_raw = rent_wrapper2.find(
+        room_size_raw = rent_wrapper.find(
             "div",
             class_="basic_facts_bottom_part"
         ).find("label").text.strip()
@@ -276,6 +292,26 @@ class WgGesucht(WohnungsMarkt):
         else:
             room_size = room_size_raw.replace("m²", "")
 
+        return {
+            "size_all": size_all,
+            "wg_type_all": wg_desc,
+            "room_size": room_size
+        }
+
+    def get_costs(self, soup):
+        """
+
+        Get costs of wg
+        (miete, nebenkosten,
+        sonstiges, kaution, abstandszahlung)
+
+        :soup: BeautifulSoup object
+        :returns: TODO
+
+        """
+
+        # basic facts
+        basic = soup.find("div", id="basic_facts_wrapper")
         # costs
         graph_wrapper = basic.find("div", id="graph_wrapper")
         # rent; [1:] to remove first element
@@ -294,6 +330,24 @@ class WgGesucht(WohnungsMarkt):
         abst = provision_eq[1].find("label").text.strip()
         abst = None if abst == "n.a." else abst.replace("€", "")
 
+        return {
+            "Sonstiges": rent_list[0],
+            "Nebenkosten": rent_list[1],
+            "Miete": rent_list[2],
+            "Gesamt": rent_list[3]
+        }
+
+    def get_angaben(self, soup):
+        """
+
+        Get details of wg
+        (house type, wifi, furniture, parking, ...)
+
+        :soup: BeautifulSoup object
+        :returns: TODO
+
+        """
+
         # angaben zum objekt
         angaben_row = soup.find_all("div", class_="row")[13].find("div")
         angaben = angaben_row.find("div")
@@ -303,12 +357,26 @@ class WgGesucht(WohnungsMarkt):
                 x.span and not "aria-hidden" in x.span.attrs
             )
         ]
+        # (house type, wifi, furniture, parking, ...)
         # create dict of items
         angaben_dict = dict([
             (x.span.attrs["class"][1].split("-", 1)[1],
              " ".join(x.text.replace("\n", "").strip().split())
              ) for x in a_filtered
         ])
+
+        return angaben_dict
+
+    def get_details(self, soup):
+        """
+
+        Get details of wg
+        (roommates, constellation, age, smoking, ...)
+
+        :soup: BeautifulSoup object
+        :returns: TODO
+
+        """
 
         # wg-details
         details = soup.find_all("div", class_="row")[11]
@@ -318,7 +386,7 @@ class WgGesucht(WohnungsMarkt):
         ]
         # "Bewohneralter" is optional; so insert None at given position
         d_list = [(x if x is not "" else None) for x in d_list]
-        details_dict = {
+        return  {
             "wg_size": d_list[0],
             "wohnung_size": d_list[1],
             "roommates": d_list[2],
@@ -329,6 +397,17 @@ class WgGesucht(WohnungsMarkt):
             "looking_for": d_list[7]
         }
 
+    def get_availability(self, soup):
+        """
+
+        Get availability
+        (from, until, online since)
+
+        :soup: BeautifulSoup object
+        :returns: avlblty_dict
+
+        """
+
         # availability
         avlblty_row = soup.find_all("div", class_="row")[8]
         avlblty_p = avlblty_row.p.text.splitlines()
@@ -336,5 +415,22 @@ class WgGesucht(WohnungsMarkt):
             x.strip() for x in avlblty_p if x.strip() is not ""
         ]
         # "frei bis" is optional so check list length
-        avlblty_dict = {"freiAb": avlblty_l[1]}
-        avlblty_dict["freiBis"] = avlblty_l[3] if len(avlblty_l) == 4 else None
+        avlblty_dict = {"frei_ab": avlblty_l[1]}
+        avlblty_dict["frei_bis"] = avlblty_l[3] if len(avlblty_l) == 4 else None
+        # since when is offer online?
+        div_online = avlblty_row.find_all("div")[2].find_all("b")
+        online_raw = [x for x in div_online if "Online" in x.text]
+        online_since = online_raw[0].text.strip().split(": ")[1]
+        # deduct time delta
+        if "Minute" in online_since:
+            t = int(online_since.split(": ")[1].split(" Minute")[0])
+            insert_datetime = datetime.now() - timedelta(t=2)
+        elif "Stunde" in online_since:
+            t = int(onine_since.split(": ")[1].split("Stunde")[0])
+            insert_datetime = datetime.now() - timedelta(t=2)
+        else:
+            inset_datetime = online_since
+
+        avlblty_dict["insert_dt"] = insert_datetime
+
+        return avlblty_dict
