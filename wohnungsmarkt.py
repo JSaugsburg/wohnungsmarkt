@@ -145,18 +145,6 @@ class WgGesucht(WohnungsMarkt):
 
         return title
 
-    def parse_wgs(self, wg_url):
-        """
-
-        Parse content of wg advert
-
-        :wg_url: url to wg advert (string)
-
-
-        :returns: TODO
-
-        """
-        pass
 
     def get_wg_images(self, soup):
         """
@@ -230,20 +218,20 @@ class WgGesucht(WohnungsMarkt):
         address = soup.find("div", class_="col-sm-4 mb10").text.strip()
         # parse for "newline" and split
         address_list = [
-            x.strip() for x in address.splitlines() if x.strip() is not ""
+            x.strip() for x in address.splitlines() if x.strip() != ""
         ]
         # street and house number
         # extract house number; house number is not mandatory!
-        if any(i.isdigit() for i in adress_list[1]):
-            house_number = adress_list[1].split(" ")[-1]
+        if any(i.isdigit() for i in address_list[1]):
+            house_number = address_list[1].split(" ")[-1]
             # because it is not known how many elements a street contains
             # it is necessary to split first
-            street = " ".join(adress_list[1].split(" ")[:-1])
+            street = " ".join(address_list[1].split(" ")[:-1])
         else:
             house_number = None
-            street = " ".join(adress_list[1].split(" "))
-        plz = adress_list[2].split(" ")[0]
-        viertel = " ".join(adress_list[2].split(" ")[2:])
+            street = " ".join(address_list[1].split(" "))
+        plz = address_list[2].split(" ")[0]
+        viertel = " ".join(address_list[2].split(" ")[2:])
 
         return {
             "street": street,
@@ -385,7 +373,7 @@ class WgGesucht(WohnungsMarkt):
                   details.find_all("li")
         ]
         # "Bewohneralter" is optional; so insert None at given position
-        d_list = [(x if x is not "" else None) for x in d_list]
+        d_list = [(x if x != "" else None) for x in d_list]
         return  {
             "wg_size": d_list[0],
             "wohnung_size": d_list[1],
@@ -412,7 +400,7 @@ class WgGesucht(WohnungsMarkt):
         avlblty_row = soup.find_all("div", class_="row")[8]
         avlblty_p = avlblty_row.p.text.splitlines()
         avlblty_l = [
-            x.strip() for x in avlblty_p if x.strip() is not ""
+            x.strip() for x in avlblty_p if x.strip() != ""
         ]
         # "frei bis" is optional so check list length
         avlblty_dict = {"frei_ab": avlblty_l[1]}
@@ -434,3 +422,26 @@ class WgGesucht(WohnungsMarkt):
         avlblty_dict["insert_dt"] = insert_datetime
 
         return avlblty_dict
+
+    def get_availability(self, soup):
+        """
+
+        Get availability
+        (from, until, online since)
+
+        :soup: BeautifulSoup object
+        :returns: avlblty_dict
+
+        """
+    def parse_wgs(self, wg_url):
+        """
+
+        Parse content of wg advert
+
+        :wg_url: url to wg advert (string)
+
+
+        :returns: TODO
+
+        """
+        pass
