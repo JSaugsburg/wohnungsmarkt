@@ -337,8 +337,12 @@ class WgGesucht(WohnungsMarkt):
         """
 
         # angaben zum objekt
-        angaben_row = soup.find_all("div", class_="row")[13].find("div")
-        angaben = angaben_row.find("div")
+        h3 = soup.find_all(
+            "h3", class_="headline headline-detailed-view-panel-title"
+        )
+        angaben_row = [
+            x.parent for x in h3 if x.text.strip() == "Angaben zum Objekt"
+        ][0]
         # filter hidden div tags and div tags that have a span tag
         a_filtered = [
             x for x in angaben.find_all("div") if (
@@ -367,7 +371,12 @@ class WgGesucht(WohnungsMarkt):
         """
 
         # wg-details
-        details = soup.find_all("div", class_="row")[11]
+        h3 = soup.find_all(
+            "h3", class_="headline headline-detailed-view-panel-title"
+        )
+        details = [
+            x.parent for x in h3 if x.text.strip() == "WG-Details"
+        ][0].parent.parent
         d_list = [
             " ".join(x.text.strip().replace("\n", "").split()) for x in
                   details.find_all("li")
@@ -397,7 +406,12 @@ class WgGesucht(WohnungsMarkt):
         """
 
         # availability
-        avlblty_row = soup.find_all("div", class_="row")[8]
+        h3 = soup.find_all(
+            "h3", class_="headline headline-detailed-view-panel-title"
+        )
+        avlblty_row = [
+            x for x in h3 if x.text.strip() == "Verfügbarkeit"
+        ][0].parent.parent
         avlblty_p = avlblty_row.p.text.splitlines()
         avlblty_l = [
             x.strip() for x in avlblty_p if x.strip() != ""
@@ -423,16 +437,6 @@ class WgGesucht(WohnungsMarkt):
 
         return avlblty_dict
 
-    def get_availability(self, soup):
-        """
-
-        Get availability
-        (from, until, online since)
-
-        :soup: BeautifulSoup object
-        :returns: avlblty_dict
-
-        """
     def parse_wgs(self, wg_url):
         """
 
@@ -444,4 +448,15 @@ class WgGesucht(WohnungsMarkt):
         :returns: TODO
 
         """
-        pass
+
+        soup = self.http_get_to_soup(wg_url)
+        return {
+            "title": self.get_title(soup),
+            "wg_images": self.get_wg_images(soup),
+            "address": self.get_address(soup),
+            "sizes": self.get_sizes(soup),
+            "costs": self.get_costs(soup),
+            "angaben": self.get_angaben(soup),
+            "details": self.get_details(soup),
+            "availability": self.get_availability(soup)
+        }
