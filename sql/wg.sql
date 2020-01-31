@@ -48,6 +48,7 @@ CREATE TABLE wg_gesucht.sources (
 ALTER TABLE wg_gesucht.sources OWNER TO sepp;
 
 CREATE TABLE wg_gesucht.viertel (
+    city character varying(255) NOT NULL,
     plz integer NOT NULL,
     name character varying(255) NOT NULL,
     insert_date date DEFAULT CURRENT_DATE NOT NULL
@@ -111,6 +112,9 @@ ALTER TABLE ONLY wg_gesucht.sources
 
 ALTER TABLE ONLY wg_gesucht.viertel
     ADD CONSTRAINT viertel_pkey PRIMARY KEY (plz);
+
+ALTER TABLE ONLY wg_gesucht.viertel
+    ADD CONSTRAINT viertel_name_fkey FOREIGN KEY (city) REFERENCES wg_gesucht.cities(name);
 
 ALTER TABLE ONLY wg_gesucht.wg_types
     ADD CONSTRAINT wg_types_pkey PRIMARY KEY (type_id);
