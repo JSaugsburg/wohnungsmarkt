@@ -1,11 +1,12 @@
 CREATE SCHEMA wg_gesucht;
-CREATE TABLE wg_gesucht.cities (
+CREATE SCHEMA gis;
+CREATE TABLE gis.cities (
     name character varying(255) NOT NULL,
     insert_date date DEFAULT CURRENT_DATE NOT NULL,
     entries_count integer
 );
 
-ALTER TABLE wg_gesucht.cities OWNER TO sepp;
+ALTER TABLE gis.cities OWNER TO sepp;
 
 CREATE TABLE wg_gesucht.images_inserate (
     id integer,
@@ -47,14 +48,14 @@ CREATE TABLE wg_gesucht.sources (
 
 ALTER TABLE wg_gesucht.sources OWNER TO sepp;
 
-CREATE TABLE wg_gesucht.viertel (
+CREATE TABLE gis.viertel (
     city character varying(255) NOT NULL,
     plz integer NOT NULL,
     name character varying(255) NOT NULL,
     insert_date date DEFAULT CURRENT_DATE NOT NULL
 );
 
-ALTER TABLE wg_gesucht.viertel OWNER TO sepp;
+ALTER TABLE gis.viertel OWNER TO sepp;
 
 CREATE TABLE wg_gesucht.wg_types (
     type_id integer NOT NULL,
@@ -101,7 +102,7 @@ ALTER TABLE ONLY wg_gesucht.wg_types ALTER COLUMN type_id SET DEFAULT nextval('w
 
 ALTER TABLE ONLY wg_gesucht.wohnungs_types ALTER COLUMN type_id SET DEFAULT nextval('wg_gesucht.wohnungs_types_type_id_seq'::regclass);
 
-ALTER TABLE ONLY wg_gesucht.cities
+ALTER TABLE ONLY gis.cities
     ADD CONSTRAINT cities_pkey PRIMARY KEY (name);
 
 ALTER TABLE ONLY wg_gesucht.inserate
@@ -110,11 +111,11 @@ ALTER TABLE ONLY wg_gesucht.inserate
 ALTER TABLE ONLY wg_gesucht.sources
     ADD CONSTRAINT sources_pkey PRIMARY KEY (name);
 
-ALTER TABLE ONLY wg_gesucht.viertel
+ALTER TABLE ONLY gis.viertel
     ADD CONSTRAINT viertel_pkey PRIMARY KEY (plz);
 
-ALTER TABLE ONLY wg_gesucht.viertel
-    ADD CONSTRAINT viertel_name_fkey FOREIGN KEY (city) REFERENCES wg_gesucht.cities(name);
+ALTER TABLE ONLY gis.viertel
+    ADD CONSTRAINT viertel_name_fkey FOREIGN KEY (city) REFERENCES gis.cities(name);
 
 ALTER TABLE ONLY wg_gesucht.wg_types
     ADD CONSTRAINT wg_types_pkey PRIMARY KEY (type_id);
@@ -132,4 +133,4 @@ ALTER TABLE ONLY wg_gesucht.inserate
     ADD CONSTRAINT inserate_source_fkey FOREIGN KEY (source) REFERENCES wg_gesucht.sources(name);
 
 ALTER TABLE ONLY wg_gesucht.inserate
-    ADD CONSTRAINT inserate_viertel_fkey FOREIGN KEY (viertel) REFERENCES wg_gesucht.viertel(plz);
+    ADD CONSTRAINT inserate_viertel_fkey FOREIGN KEY (viertel) REFERENCES gis.viertel(plz);
