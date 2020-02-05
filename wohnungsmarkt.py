@@ -86,6 +86,15 @@ class WgGesucht(WohnungsMarkt):
             print(f"Expected Content Type text/html, but got \
                   {r.headers['Content-Type']} instead")
 
+    def _get_viertel(self):
+        """
+
+        Loads administrative areas of city
+        areas are stored as geojson files
+
+        """
+        pass
+
     def get_page_counter(self):
         """
 
