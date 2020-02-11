@@ -1,5 +1,8 @@
 from bs4 import BeautifulSoup
 from datetime import datetime, timedelta
+import geopandas as gpd
+import os
+import pandas as pd
 import re
 import requests
 
@@ -60,12 +63,37 @@ class WgGesucht(WohnungsMarkt):
         # super().__init__()
         self.wtype = wtype
         self.stadt = stadt
+        self.gdf = self.__get_viertel(stadt)
         self.p_cnt = 0
         # store current page content
         self.soup = None
         self.urls = []
         self.get_string = self.url + self.wtype_dict[wtype] + "-in-" + stadt \
         + "." + self.city_codes[stadt] + ".0.0." + f"{self.p_cnt}" + ".html"
+
+    def __get_viertel(self, city):
+        """
+
+        Loads administrative areas of city
+        areas are stored as geojson files
+
+        viertel are stored as attribute
+
+        :city: city to build geodatframe from (string)
+
+        """
+        # os.walk creates generator
+        # ("root", ["dirs"], ["files"])
+        root, _, files = list(
+            os.walk("geojson/" + city.lower() + "/viertel")
+        )[0]
+        # create GeoDataFrame from all available "viertel"
+        gdf = gpd.GeoDataFrame(
+            pd.concat([
+                gpd.read_file(root + "/" + file) for file in files
+            ])
+        )
+        return gdf
 
     def http_get_to_soup(self, url):
         """
@@ -85,15 +113,6 @@ class WgGesucht(WohnungsMarkt):
         else:
             print(f"Expected Content Type text/html, but got \
                   {r.headers['Content-Type']} instead")
-
-    def _get_viertel(self):
-        """
-
-        Loads administrative areas of city
-        areas are stored as geojson files
-
-        """
-        pass
 
     def get_page_counter(self):
         """
