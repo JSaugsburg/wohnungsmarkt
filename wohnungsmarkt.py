@@ -33,15 +33,17 @@ class WohnungsMarkt:
         :url: the url to get (string) -> default get_string
         :returns: requests Response object
         """
-
-        r = requests.get(url)
-        if r.status_code == 200:
-            return r
-        else:
-            raise requests.HTTPError(
-                f"Request failed with status_code {r.status_code}"
-            )
-
+        try:
+            r = requests.get(url)
+            if r.status_code == 200:
+                return r
+            else:
+                raise requests.HTTPError(
+                    f"Request failed with status_code {r.status_code}"
+                )
+        except requests.ConnectionError(
+            url + " probably offline!"
+        )
 
 class WgGesucht(WohnungsMarkt):
 
@@ -113,6 +115,33 @@ class WgGesucht(WohnungsMarkt):
         else:
             print(f"Expected Content Type text/html, but got \
                   {r.headers['Content-Type']} instead")
+
+    def nominatim_request(self, string_l):
+        """
+
+        searches nominatim DB for string_l
+        :string_l list of string that contain address data
+        :returns: geojson
+
+        """
+        nominatim_str = "https://nominatim.openstreetmap.org/search?q="
+        address_data = self.stadt + "+" + "+".join(string_l)
+        form = "&format=geojson"
+        r = self.http_get(nominatim_str + address_data + form)
+        json = r.json()
+        # parse json content
+        # requests should return a FeatureCollection as type
+        if json["type"] == "FeatureCollection":
+            # FC should only have one feature if there is a
+            # housenumber provided
+            if len(json["features"]) == 1:
+                display_n = json["features"][0]["properties"]["display_name"]
+                # viertel is the 4th item in the string
+                viertel = display_n.split(", ")[3]
+        else:
+            print("wrong format")
+
+        return viertel
 
     def get_page_counter(self):
         """
