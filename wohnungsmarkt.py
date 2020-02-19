@@ -227,37 +227,8 @@ class WgGesucht(WohnungsMarkt):
         :returns: TODO
 
         """
-
-        # TODO kontakte mit reinnehmen??
-        # Problem: Name und Handynr werden NICHT im Klartext angezeigt
-        # # get contact info
-        # contact_panel = soup.find_all(
-        #     "div",
-        #     class_="panel panel-rhs-default rhs_contact_information hidden-sm"
-        # )
-        # # get contact picture
-        # pic = contact_panel.find(
-        #     "div", class_="profile_image_dav cursor-pointer"
-        # )
-        # # pic available
-        # if pic is not None:
-        #     pic_url = pic["data-featherlight"]
-        #     # get image
-        #     r = requests.get(pic_url)
-        #     pic_kontakt_bytea = r.content
-        # else:
-        #     pic_kontakt_bytea = None
-        # # get contact name / alias
-
-        # # member since
-        # member_since = list(
-        #     contact_panel.find("div", class_="col-md-8")
-        # )[4].strip()
-
-        # get images of wg-object
         # TODO bei request wird nur 1 Bild angezeigt -> Versuchen alle Bilder
         # zu extrahieren!
-
         # Als Uebergangsloesung wird Bild aus Header genommen
         img_link = soup.head.find("link", rel="image_src").get("href")
         # wg images are optional
@@ -417,7 +388,7 @@ class WgGesucht(WohnungsMarkt):
         ][0]
         # filter hidden div tags and div tags that have a span tag
         a_filtered = [
-            x for x in angaben.find_all("div") if (
+            x for x in angaben_row.find_all("div") if (
                 x.span and not "aria-hidden" in x.span.attrs
             )
         ]
@@ -497,13 +468,18 @@ class WgGesucht(WohnungsMarkt):
         online_since = online_raw[0].text.strip().split(": ")[1]
         # deduct time delta
         if "Minute" in online_since:
-            t = int(online_since.split(": ")[1].split(" Minute")[0])
-            insert_datetime = datetime.now() - timedelta(t=2)
+            # t = int(online_since.split(": ")[1].split(" Minute")[0])
+            t = int(online_since.split(" Minute")[0])
+            insert_datetime = datetime.now() - timedelta(minutes=t)
         elif "Stunde" in online_since:
-            t = int(onine_since.split(": ")[1].split("Stunde")[0])
-            insert_datetime = datetime.now() - timedelta(t=2)
+            # t = int(online_since.split(": ")[1].split("Stunde")[0])
+            t = int(online_since.split(" Stunde")[0])
+            insert_datetime = datetime.now() - timedelta(hours=t)
+        elif "Tage" in online_since:
+            t = int(online_since.split(" Tage")[0])
+            insert_datetime = datetime.now() - timedelta(days=t)
         else:
-            inset_datetime = online_since
+            insert_datetime = datetime.strptime(online_since, "%d.%m.%Y")
 
         avlblty_dict["insert_dt"] = insert_datetime
 
