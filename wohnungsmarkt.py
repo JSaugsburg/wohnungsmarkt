@@ -41,9 +41,8 @@ class WohnungsMarkt:
                 raise requests.HTTPError(
                     f"Request failed with status_code {r.status_code}"
                 )
-        except requests.ConnectionError(
-            url + " probably offline!"
-        )
+        except requests.ConnectionError:
+            raise url + " probably offline!"
 
 class WgGesucht(WohnungsMarkt):
 
@@ -65,7 +64,8 @@ class WgGesucht(WohnungsMarkt):
         # super().__init__()
         self.wtype = wtype
         self.stadt = stadt
-        self.gdf = self.__get_viertel(stadt)
+        self.viertel = self.__get_viertel(stadt)
+        self.roads = self.__get_roads(stadt)
         self.p_cnt = 0
         # store current page content
         self.soup = None
@@ -95,6 +95,21 @@ class WgGesucht(WohnungsMarkt):
                 gpd.read_file(root + "/" + file) for file in files
             ])
         )
+        return gdf
+
+    def __get_roads(self, city):
+        """
+
+        Loads roads of city
+
+        :city: city to build geodatframe from (string)
+
+        """
+        # create GeoDataFrame from "city"_roads.geojson file
+        gdf = gpd.read_file(
+            "geojson/" + city.lower() + "/" + city.lower() + "_roads.geojson"
+        )
+
         return gdf
 
     def http_get_to_soup(self, url):
