@@ -1,5 +1,6 @@
 CREATE SCHEMA wg_gesucht;
 CREATE SCHEMA gis;
+CREATE EXTENSION postgis;
 CREATE TABLE gis.cities (
     name character varying(255) NOT NULL,
     insert_date date DEFAULT CURRENT_DATE NOT NULL,

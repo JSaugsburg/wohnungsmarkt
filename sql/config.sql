@@ -1,5 +1,5 @@
-INSERT INTO wg_gesucht.cities
+INSERT INTO gis.cities
 VALUES ('Augsburg');
 
-INSERT INTO wg_gesucht.viertel
+INSERT INTO gis.viertel
 VALUES ('Augsburg');
