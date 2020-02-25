@@ -134,4 +134,4 @@ ALTER TABLE ONLY wg_gesucht.inserate
     ADD CONSTRAINT inserate_source_fkey FOREIGN KEY (source) REFERENCES wg_gesucht.sources(name);
 
 ALTER TABLE ONLY wg_gesucht.inserate
-    ADD CONSTRAINT inserate_viertel_fkey FOREIGN KEY (viertel) REFERENCES gis.viertel(plz);
+    ADD CONSTRAINT inserate_viertel_fkey FOREIGN KEY (viertel) REFERENCES gis.viertel(name);
