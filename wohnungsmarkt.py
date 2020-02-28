@@ -3,6 +3,8 @@ from datetime import datetime, timedelta
 import geopandas as gpd
 import os
 import pandas as pd
+import psycopg2
+from psycopg2.extras import Json
 import re
 import requests
 
@@ -26,6 +28,10 @@ class WohnungsMarkt:
         "Augsburg": "2"
     }
 
+    conn = psycopg2.connect("dbname=wohnungsmarkt_db user=sepp")
+    def __init__(self):
+        self.cur = self.conn.cursor()
+
     def http_get(self, url):
         """
         Simple Helper method to HTTP GET urls and validate
@@ -44,10 +50,30 @@ class WohnungsMarkt:
         except requests.ConnectionError:
             raise url + " probably offline!"
 
+    def execute_sql(self, cursor, sql_str, params):
+        """
+        General Method to execute SQL statements for
+        a given Database
+
+        :cursor: cursor for conn
+        :sql_str: sql_str to be executed
+        :params: params for sql_str (tuple)
+        """
+
+        cursor.execute(sql_str, params)
+
 class WgGesucht(WohnungsMarkt):
 
     """Docstring for WgGesucht. """
     url = "https://www.wg-gesucht.de/"
+
+    inserat_sql = """
+        INSERT INTO wg_gesucht.inserate (inserat_id, viertel, titel,
+        miete_gesamt, miete_kalt, miete_sonstige, nebenkosten,
+        kaution, abstandszahlung, verfuegbar, insert_date, stadt,
+        frei_ab, frei_bis, adresse, groesse) VALUES
+        (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s);
+        """
 
     def __init__(self, wtype, stadt):
         """
@@ -56,12 +82,12 @@ class WgGesucht(WohnungsMarkt):
             1: "wg",
             2: "1-zimmer-wohnung",
             3: "wohnung",
-            4: haus
+            4: "haus"
         }
         :stadt: welche Stadt? (string)
 
         """
-        # super().__init__()
+        super().__init__()
         self.wtype = wtype
         self.stadt = stadt
         self.viertel = self.__get_viertel(stadt)
@@ -70,8 +96,8 @@ class WgGesucht(WohnungsMarkt):
         # store current page content
         self.soup = None
         self.urls = []
-        self.get_string = self.url + self.wtype_dict[wtype] + "-in-" + stadt \
-        + "." + self.city_codes[stadt] + ".0.0." + f"{self.p_cnt}" + ".html"
+        self.get_string = self.url + self.wtype_dict[wtype] \
+        + "-in-" + stadt + "." + self.city_codes[stadt] + ".0.0."
 
     def __get_viertel(self, city):
         """
@@ -168,27 +194,31 @@ class WgGesucht(WohnungsMarkt):
         """
 
         # reset page counter
-        soup = self.http_get_to_soup(self.get_string)
+        soup = self.http_get_to_soup(self.get_string + "0.html")
         # find page_bar with numbers of pages
-        page_bar = soup.find_all("ul", class_="pagination pagination-sm")[0]
-        page_counter = int(page_bar.find_all("li")[-2].get_text().strip())
+        page_bar = soup.find_all(
+            "ul", class_="pagination pagination-sm"
+        )[0]
+        page_counter = int(
+            page_bar.find_all("li")[-2].get_text().strip()
+        )
         self.p_cnt = page_counter
         print(f"There are {page_counter} pages available")
 
         return page_counter
 
-    def get_urls(self):
+    def get_urls(self, p_cnt):
         """
 
         Retrieve availabe urls of adverts from main page
-        :soup: BeautifulSoup object
+        :p_cnt: p_cnt (int)
 
         :returns: list of urls to available wgs
 
         """
 
         # get main offer listing
-        soup = self.http_get_to_soup(self.get_string)
+        soup = self.http_get_to_soup(self.get_string + str(p_cnt) + ".html")
         # wgs list from "main column"
         wgs_body = soup.find("div", id="main_column").table.tbody.find_all("tr")
         # filter out AirBnb offers
@@ -362,10 +392,12 @@ class WgGesucht(WohnungsMarkt):
         abst = None if abst == "n.a." else abst.replace("€", "")
 
         return {
-            "Sonstiges": rent_list[0],
-            "Nebenkosten": rent_list[1],
-            "Miete": rent_list[2],
-            "Gesamt": rent_list[3]
+            "others": rent_list[0],
+            "extra": rent_list[1],
+            "rent": rent_list[2],
+            "rent_all": rent_list[3],
+            "deposit": provision,
+            "transfer_fee": abst
         }
 
     def get_angaben(self, soup):
@@ -459,9 +491,16 @@ class WgGesucht(WohnungsMarkt):
         avlblty_l = [
             x.strip() for x in avlblty_p if x.strip() != ""
         ]
+        avlblty_dict = {
+            "frei_ab": datetime.strptime(avlblty_l[1], "%d.%m.%Y").isoformat()
+        }
         # "frei bis" is optional so check list length
-        avlblty_dict = {"frei_ab": avlblty_l[1]}
-        avlblty_dict["frei_bis"] = avlblty_l[3] if len(avlblty_l) == 4 else None
+        if len(avlblty_l) == 4:
+            avlblty_dict["frei_bis"] = datetime.strptime(
+                avlblty_l[3], "%d.%m.%Y"
+            ).isoformat()
+        else:
+            avlblty_dict["frei_bis"] = None
         # since when is offer online?
         div_online = avlblty_row.find_all("div")[2].find_all("b")
         online_raw = [x for x in div_online if "Online" in x.text]
@@ -475,8 +514,8 @@ class WgGesucht(WohnungsMarkt):
             # t = int(online_since.split(": ")[1].split("Stunde")[0])
             t = int(online_since.split(" Stunde")[0])
             insert_datetime = datetime.now() - timedelta(hours=t)
-        elif "Tage" in online_since:
-            t = int(online_since.split(" Tage")[0])
+        elif "Tag" in online_since:
+            t = int(online_since.split(" Tag")[0])
             insert_datetime = datetime.now() - timedelta(days=t)
         else:
             insert_datetime = datetime.strptime(online_since, "%d.%m.%Y")
@@ -485,6 +524,23 @@ class WgGesucht(WohnungsMarkt):
 
         return avlblty_dict
 
+    def check_wg_available(self, soup):
+        """
+
+        checks for h4 element in html with keyword "deaktiviert"
+
+        :wg_url: url to wg advert (string)
+
+        :returns: Bool if inserat is available
+        """
+
+        hfours = soup.find_all("h4", class_="headline alert-primary-headline")
+        check = [x for x in hfours if "deaktiviert" in x.text]
+
+        # 0 no alerts -> wg is available
+        # > 1 alters -> wg is unavailable
+        return len(check) == 0
+
     def parse_wgs(self, wg_url):
         """
 
@@ -492,19 +548,50 @@ class WgGesucht(WohnungsMarkt):
 
         :wg_url: url to wg advert (string)
 
-
-        :returns: TODO
+        :returns: combined dictionary with all info of inserat
 
         """
-
+        inserat_id = wg_url.split(".")[-2]
         soup = self.http_get_to_soup(wg_url)
         return {
+            "inserat_id": inserat_id,
             "title": self.get_title(soup),
-            "wg_images": self.get_wg_images(soup),
             "address": self.get_address(soup),
             "sizes": self.get_sizes(soup),
             "costs": self.get_costs(soup),
             "angaben": self.get_angaben(soup),
             "details": self.get_details(soup),
-            "availability": self.get_availability(soup)
+            "availability": self.get_availability(soup),
+            "check_available": self.check_wg_available(soup)
         }
+
+    def insert_into_inserate(self, parsed_wg):
+        """
+
+        Inserts parsed wg page into DB
+        Used in conjunction with self.parse_wg
+
+        :parsed_wg: items to fill into wg_gesucht.inserate (dict)
+
+        """
+        preped_l = [
+            parsed_wg["inserat_id"],
+            parsed_wg["address"]["viertel"] + "_" + self.stadt,
+            parsed_wg["title"],
+            parsed_wg["costs"]["rent_all"],
+            parsed_wg["costs"]["rent"],
+            parsed_wg["costs"]["others"],
+            parsed_wg["costs"]["extra"],
+            parsed_wg["costs"]["deposit"],
+            parsed_wg["costs"]["transfer_fee"],
+            parsed_wg["check_available"],
+            parsed_wg["availability"]["insert_dt"],
+            self.stadt,
+            parsed_wg["availability"]["frei_ab"],
+            parsed_wg["availability"]["frei_bis"],
+            Json(parsed_wg["address"]),
+            Json(parsed_wg["sizes"])
+        ]
+        self.execute_sql(self.cur,
+                         self.inserat_sql,
+                         preped_l)
