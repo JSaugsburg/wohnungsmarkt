@@ -75,6 +75,11 @@ class WgGesucht(WohnungsMarkt):
         (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s);
         """
 
+    images_sql = """
+        INSERT INTO wg_gesucht.images_inserate (id, image)
+        VALUES (%s,%s);
+        """
+
     def __init__(self, wtype, stadt):
         """
 
@@ -206,6 +211,19 @@ class WgGesucht(WohnungsMarkt):
         print(f"There are {page_counter} pages available")
 
         return page_counter
+
+    def get_id_of_url(self, wg_url):
+        """
+
+        parse id of wg_url
+        :wg_url: url of wg_gesucht (string)
+
+        :returns: uid of inserat (string)
+        """
+
+        inserat_id = wg_url.split(".")[-2]
+
+        return inserat_id
 
     def get_urls(self, p_cnt):
         """
@@ -565,7 +583,7 @@ class WgGesucht(WohnungsMarkt):
         :returns: combined dictionary with all info of inserat
 
         """
-        inserat_id = wg_url.split(".")[-2]
+        inserat_id = self.get_id_of_url(wg_url)
         soup = self.http_get_to_soup(wg_url)
         return {
             "inserat_id": inserat_id,
@@ -611,3 +629,17 @@ class WgGesucht(WohnungsMarkt):
         self.execute_sql(self.cur,
                          self.inserat_sql,
                          preped_l)
+
+    def insert_into_images(self, inserat_id, images_bytes):
+        """
+
+        Inserts bytes of image into DB
+        Used in conjunction with self.get_wg_images
+
+        :inserat_id: uid of inserat
+        :images_bytes: bytes of image to fill into wg_gesucht.images_inserate
+
+        """
+        self.execute_sql(self.cur,
+                         self.images_sql,
+                         [inserat_id, images_bytes])
