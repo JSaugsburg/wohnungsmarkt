@@ -71,8 +71,8 @@ class WgGesucht(WohnungsMarkt):
         INSERT INTO wg_gesucht.inserate (inserat_id, viertel, titel,
         miete_gesamt, miete_kalt, miete_sonstige, nebenkosten,
         kaution, abstandszahlung, verfuegbar, insert_date, stadt,
-        frei_ab, frei_bis, adresse, groesse) VALUES
-        (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s);
+        frei_ab, frei_bis, adresse, groesse, mitbewohner, wohnungs_type) VALUES
+        (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s);
         """
 
     def __init__(self, wtype, stadt):
@@ -403,11 +403,11 @@ class WgGesucht(WohnungsMarkt):
     def get_angaben(self, soup):
         """
 
-        Get details of wg
+        Get angaben of wg
         (house type, wifi, furniture, parking, ...)
 
         :soup: BeautifulSoup object
-        :returns: TODO
+        :returns: dict
 
         """
 
@@ -441,7 +441,7 @@ class WgGesucht(WohnungsMarkt):
         (roommates, constellation, age, smoking, ...)
 
         :soup: BeautifulSoup object
-        :returns: TODO
+        :returns: dict
 
         """
 
@@ -450,7 +450,7 @@ class WgGesucht(WohnungsMarkt):
             "h3", class_="headline headline-detailed-view-panel-title"
         )
         details = [
-            x.parent for x in h3 if x.text.strip() == "WG-Details"
+            x for x in h3 if x.text.strip() == "WG-Details"
         ][0].parent.parent
         d_list = [
             " ".join(x.text.strip().replace("\n", "").split()) for x in
@@ -458,6 +458,19 @@ class WgGesucht(WohnungsMarkt):
         ]
         # "Bewohneralter" is optional; so insert None at given position
         d_list = [(x if x != "" else None) for x in d_list]
+
+        # parse roommates:
+        # 4 Bytes [FF: All, FF: Women, FF: Men, FF: Diverse]
+        r = d_list[2]
+        r_splits = r.split(" ")
+        # format for roommates: 2er WG (1 Frau und 0 Männer und 0 Divers)
+        r_all = int("".join([x for x in r_splits[0] if x.isdigit()]))
+        r_w = int(r_splits[2].strip("("))
+        r_m = int(r_splits[5])
+        r_d = int(r_splits[8])
+
+        roommates_bytes = bytes([r_all, r_w, r_m, r_d])
+
         return  {
             "wg_size": d_list[0],
             "wohnung_size": d_list[1],
@@ -466,7 +479,8 @@ class WgGesucht(WohnungsMarkt):
             "smoking": d_list[4],
             "wg_type": d_list[5],
             "languages": d_list[6],
-            "looking_for": d_list[7]
+            "looking_for": d_list[7],
+            "roommates_bytes": roommates_bytes
         }
 
     def get_availability(self, soup):
@@ -590,7 +604,9 @@ class WgGesucht(WohnungsMarkt):
             parsed_wg["availability"]["frei_ab"],
             parsed_wg["availability"]["frei_bis"],
             Json(parsed_wg["address"]),
-            Json(parsed_wg["sizes"])
+            Json(parsed_wg["sizes"]),
+            parsed_wg["details"]["roommates_bytes"],
+            self.wtype
         ]
         self.execute_sql(self.cur,
                          self.inserat_sql,
