@@ -30,6 +30,7 @@ class WohnungsMarkt:
 
     conn = psycopg2.connect("dbname=wohnungsmarkt_db user=sepp")
     def __init__(self):
+        self.conn.autocommit = True
         self.cur = self.conn.cursor()
 
     def http_get(self, url):
@@ -617,7 +618,8 @@ class WgGesucht(WohnungsMarkt):
             "angaben": self.get_angaben(soup),
             "details": self.get_details(soup),
             "availability": self.get_availability(soup),
-            "check_available": self.check_wg_available(soup)
+            "check_available": self.check_wg_available(soup),
+            "wg_images": self.get_wg_images(soup)
         }
 
     def insert_into_inserate(self, parsed_wg):
@@ -652,6 +654,10 @@ class WgGesucht(WohnungsMarkt):
         self.execute_sql(self.cur,
                          self.inserat_sql,
                          preped_l)
+
+        self.insert_into_images(
+            parsed_wg["inserat_id"], parsed_wg["wg_images"]
+        )
 
     def insert_into_images(self, inserat_id, images_bytes):
         """
