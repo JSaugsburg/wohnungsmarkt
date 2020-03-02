@@ -125,8 +125,9 @@ class WgGesucht(WohnungsMarkt):
 
         """
         self.cur.execute(self.inserat_ids_sql, (city, wtype,))
+        rows = self.cur.fetchall()
 
-        return self.cur.fetchall()[0]
+        return rows[0] if len(rows) > 0 else []
 
     def __get_viertel(self, city):
         """
@@ -242,10 +243,10 @@ class WgGesucht(WohnungsMarkt):
         parse id of wg_url
         :wg_url: url of wg_gesucht (string)
 
-        :returns: uid of inserat (string)
+        :returns: uid of inserat (int)
         """
 
-        inserat_id = wg_url.split(".")[-2]
+        inserat_id = int(wg_url.split(".")[-2])
 
         return inserat_id
 
