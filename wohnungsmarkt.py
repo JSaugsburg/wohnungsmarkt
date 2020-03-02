@@ -80,6 +80,12 @@ class WgGesucht(WohnungsMarkt):
         VALUES (%s,%s);
         """
 
+    inserat_ids_sql = """
+        SELECT inserat_id FROM wg_gesucht.inserate
+        WHERE stadt = %s
+        AND wohnungs_type = %s;
+        """
+
     def __init__(self, wtype, stadt):
         """
 
@@ -98,11 +104,28 @@ class WgGesucht(WohnungsMarkt):
         self.viertel = self.__get_viertel(stadt)
         self.roads = self.__get_roads(stadt)
         self.p_cnt = 0
+        self.inserat_ids = self.__get_inserat_ids(stadt, wtype)
         # store current page content
         self.soup = None
         self.urls = []
         self.get_string = self.url + self.wtype_dict[wtype] \
         + "-in-" + stadt + "." + self.city_codes[stadt] + ".0.0."
+
+    def __get_inserat_ids(self, city, wtype):
+        """
+
+        Loads currently stored inserat_ids
+        for given wtype and city
+
+        :city: city to filter inserate (string)
+        :wtype: wtype to filter inserate (string)
+
+        :returns: list of inserat_ids
+
+        """
+        self.cur.execute(self.inserat_ids_sql, (city, wtype,))
+
+        return self.cur.fetchall()[0]
 
     def __get_viertel(self, city):
         """
