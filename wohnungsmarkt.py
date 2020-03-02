@@ -127,7 +127,7 @@ class WgGesucht(WohnungsMarkt):
         self.cur.execute(self.inserat_ids_sql, (city, wtype,))
         rows = self.cur.fetchall()
 
-        return rows[0] if len(rows) > 0 else []
+        return [x[0] for x in rows] if len(rows) > 0 else []
 
     def __get_viertel(self, city):
         """
