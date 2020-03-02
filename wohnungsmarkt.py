@@ -502,6 +502,10 @@ class WgGesucht(WohnungsMarkt):
         # "Bewohneralter" is optional; so insert None at given position
         d_list = [(x if x != "" else None) for x in d_list]
 
+        # "Rauchen" is optional so add None if not present
+        if len(d_list) == 7:
+            d_list.insert(4, None)
+
         # parse roommates:
         # 4 Bytes [FF: All, FF: Women, FF: Men, FF: Diverse]
         r = d_list[2]
