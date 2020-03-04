@@ -1,4 +1,5 @@
 from bs4 import BeautifulSoup
+import configparser
 from datetime import datetime, timedelta
 import geopandas as gpd
 import os
@@ -7,6 +8,7 @@ import psycopg2
 from psycopg2.extras import Json
 import re
 import requests
+import sys
 
 
 class WohnungsMarkt:
@@ -29,6 +31,8 @@ class WohnungsMarkt:
     }
 
     conn = psycopg2.connect("dbname=wohnungsmarkt_db user=sepp")
+    config = configparser.ConfigParser()
+
     def __init__(self):
         self.conn.autocommit = True
         self.cur = self.conn.cursor()
@@ -87,6 +91,8 @@ class WgGesucht(WohnungsMarkt):
         AND wohnungs_type = %s;
         """
 
+    session = requests.Session()
+
     def __init__(self, wtype, stadt):
         """
 
@@ -102,13 +108,14 @@ class WgGesucht(WohnungsMarkt):
         super().__init__()
         self.wtype = wtype
         self.stadt = stadt
-        self.viertel = self.__get_viertel(stadt)
-        self.roads = self.__get_roads(stadt)
-        self.p_cnt = 0
-        self.inserat_ids = self.__get_inserat_ids(stadt, wtype)
         # store current page content
+        self.p_cnt = 0
         self.soup = None
         self.urls = []
+        self.config.read("cfg.ini")
+        self.viertel = self.__get_viertel(stadt)
+        self.roads = self.__get_roads(stadt)
+        self.inserat_ids = self.__get_inserat_ids(stadt, wtype)
         self.get_string = self.url + self.wtype_dict[wtype] \
         + "-in-" + stadt + "." + self.city_codes[stadt] + ".0.0."
 
@@ -167,6 +174,37 @@ class WgGesucht(WohnungsMarkt):
         )
 
         return gdf
+
+    def sign_in(self):
+        """
+
+        sign in to wg_gesucht.de with default credentials from cfg.ini
+        sets requests session
+
+        """
+
+        payload = {
+            "login_email_username": self.config["WGGESUCHT"]["email"],
+            "login_password": self.config["WGGESUCHT"]["pw"],
+            "login_form_auto_login": "1",
+            "display_language": "de",
+        }
+
+        try:
+            login = self.session.post(
+                "https://www.wg-gesucht.de/ajax/api/Smp/api.php?action=login",
+                json=payload,
+            )
+        except requests.exceptions.Timeout:
+            print("Timed out trying to log in")
+        except requests.exceptions.ConnectionError:
+            print("Could not connect to internet")
+
+        if login.json():
+            print("logged in successfully")
+        else:
+            print("Could not log in with the given email and password")
+            sys.exit(1)
 
     def http_get_to_soup(self, url):
         """
