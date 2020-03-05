@@ -618,8 +618,7 @@ class WgGesucht(WohnungsMarkt):
         else:
             avlblty_dict["frei_bis"] = None
         # since when is offer online?
-        div_online = avlblty_row.find_all("div")[2].find_all("b")
-        online_raw = [x for x in div_online if "Online" in x.text]
+        online_raw = soup.find_all("b", class_="noprint")
         online_since = online_raw[0].text.strip().split(": ")[1]
         # deduct time delta
         if "Minute" in online_since:
