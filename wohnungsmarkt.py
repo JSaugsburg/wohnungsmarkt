@@ -218,11 +218,17 @@ class WgGesucht(WohnungsMarkt):
 
         r = self.http_get(url)
         # check if url is in "cuba"
+        i = 0
         while r.url == "https://www.wg-gesucht.de/cuba.html":
-            c = random.choice([15, 16, 17, 18, 19, 20])
-            print(f"Captcha appeared! Waiting {c} minutes")
-            time.sleep(c * 60)
-            r = self.http_get(url)
+            # 9 tries
+            if i < 10:
+                c = random.choice([15, 16, 17, 18, 19, 20])
+                print(f"Captcha appeared! Waiting {c} minutes")
+                time.sleep(c * 60)
+                r = self.http_get(url)
+                i += 1
+            else:
+                sys.exit(1)
 
         # only allow content type "text/html"
         if "text/html" in r.headers["Content-Type"]:
