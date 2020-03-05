@@ -11,4 +11,4 @@ for i in range(p_cnt):
         parsed_wg = wg.parse_wgs(url)
         if parsed_wg["inserat_id"] not in wg.inserat_ids:
             wg.insert_into_inserate(parsed_wg)
-            time.sleep(random.choice([4, 5, 6, 7, 8))
+            time.sleep(random.choice([4, 5, 6, 7, 8])
