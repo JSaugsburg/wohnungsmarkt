@@ -218,6 +218,7 @@ class WgGesucht(WohnungsMarkt):
 
         r = self.http_get(url)
         # check if url is in "cuba"
+        print(r.url)
         i = 0
         while r.url == "https://www.wg-gesucht.de/cuba.html":
             # 9 tries
