@@ -220,7 +220,7 @@ class WgGesucht(WohnungsMarkt):
         # check if url is in "cuba"
         print(r.url)
         i = 0
-        while r.url == "https://www.wg-gesucht.de/cuba.html":
+        while "https://www.wg-gesucht.de/cuba.html" in r.url:
             # 9 tries
             if i < 10:
                 c = random.choice([15, 16, 17, 18, 19, 20])
