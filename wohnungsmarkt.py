@@ -564,11 +564,13 @@ class WgGesucht(WohnungsMarkt):
         r_splits = r.split(" ")
         # format for roommates: 2er WG (1 Frau und 0 Männer und 0 Divers)
         r_all = int("".join([x for x in r_splits[0] if x.isdigit()]))
-        r_w = int(r_splits[2].strip("("))
-        r_m = int(r_splits[5])
-        r_d = int(r_splits[8])
+        comp = r_splits[2]
+        r_comp = [int(re.findall(r'\d+', x)[0]) for x in comp.split(",")]
+        # r_w = int(r_splits[2].strip("("))
+        # r_m = int(r_splits[5])
+        # r_d = int(r_splits[8])
 
-        roommates_bytes = bytes([r_all, r_w, r_m, r_d])
+        roommates_bytes = bytes(r_comp)
 
         return  {
             "wg_size": d_list[0],
