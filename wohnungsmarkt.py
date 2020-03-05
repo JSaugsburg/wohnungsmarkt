@@ -561,6 +561,7 @@ class WgGesucht(WohnungsMarkt):
         # parse roommates:
         # 4 Bytes [FF: All, FF: Women, FF: Men, FF: Diverse]
         r = soup.find_all("span", title=re.compile("WG"))[0]
+        r_title = r.get("title")
         r_splits = r.split(" ")
         # format for roommates: 2er WG (1 Frau und 0 Männer und 0 Divers)
         r_all = int("".join([x for x in r_splits[0] if x.isdigit()]))
