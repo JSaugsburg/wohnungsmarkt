@@ -6,9 +6,11 @@ import os
 import pandas as pd
 import psycopg2
 from psycopg2.extras import Json
+import random
 import re
 import requests
 import sys
+import time
 
 
 class WohnungsMarkt:
@@ -116,6 +118,7 @@ class WgGesucht(WohnungsMarkt):
         self.viertel = self.__get_viertel(stadt)
         self.roads = self.__get_roads(stadt)
         self.inserat_ids = self.__get_inserat_ids(stadt, wtype)
+        self.__sign_in()
         self.get_string = self.url + self.wtype_dict[wtype] \
         + "-in-" + stadt + "." + self.city_codes[stadt] + ".0.0."
 
@@ -175,7 +178,7 @@ class WgGesucht(WohnungsMarkt):
 
         return gdf
 
-    def sign_in(self):
+    def __sign_in(self):
         """
 
         sign in to wg_gesucht.de with default credentials from cfg.ini
@@ -200,9 +203,7 @@ class WgGesucht(WohnungsMarkt):
         except requests.exceptions.ConnectionError:
             print("Could not connect to internet")
 
-        if login.json():
-            print("logged in successfully")
-        else:
+        if not login.json():
             print("Could not log in with the given email and password")
             sys.exit(1)
 
@@ -216,6 +217,13 @@ class WgGesucht(WohnungsMarkt):
         """
 
         r = self.http_get(url)
+        # check if url is in "cuba"
+        while r.url == "https://www.wg-gesucht.de/cuba.html":
+            c = random.choice([15, 16, 17, 18, 19, 20])
+            print(f"Captcha appeared! Waiting {c} minutes")
+            time.sleep(c * 60)
+            r = self.http_get(url)
+
         # only allow content type "text/html"
         if "text/html" in r.headers["Content-Type"]:
             soup = BeautifulSoup(r.text, "lxml")
