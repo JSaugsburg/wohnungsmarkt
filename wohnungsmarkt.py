@@ -225,8 +225,10 @@ class WgGesucht(WohnungsMarkt):
             if i < 10:
                 c = random.choice([15, 16, 17, 18, 19, 20])
                 print(f"Captcha appeared! Waiting {c} minutes")
+                print(i)
                 time.sleep(c * 60)
                 r = self.http_get(url)
+                print(r.url)
                 i += 1
             else:
                 sys.exit(1)
