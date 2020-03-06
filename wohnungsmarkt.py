@@ -267,17 +267,20 @@ class WgGesucht(WohnungsMarkt):
 
         # reset page counter
         soup = self.http_get_to_soup(self.get_string + "0.html")
-        # find page_bar with numbers of pages
-        page_bar = soup.find_all(
-            "ul", class_="pagination pagination-sm"
-        )[0]
-        page_counter = int(
-            page_bar.find_all("li")[-2].get_text().strip()
-        )
-        self.p_cnt = page_counter
-        print(f"There are {page_counter} pages available")
+        if "https://www.wg-gesucht.de/cuba.html" in self.current_url:
+            return 1
+        else:
+            # find page_bar with numbers of pages
+            page_bar = soup.find_all(
+                "ul", class_="pagination pagination-sm"
+            )[0]
+            page_counter = int(
+                page_bar.find_all("li")[-2].get_text().strip()
+            )
+            self.p_cnt = page_counter
+            print(f"There are {page_counter} pages available")
 
-        return page_counter
+            return page_counter
 
     def get_id_of_url(self, wg_url):
         """
