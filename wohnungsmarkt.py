@@ -661,18 +661,21 @@ class WgGesucht(WohnungsMarkt):
         """
         inserat_id = self.get_id_of_url(wg_url)
         soup = self.http_get_to_soup(wg_url)
-        return {
-            "inserat_id": inserat_id,
-            "title": self.get_title(soup),
-            "address": self.get_address(soup),
-            "sizes": self.get_sizes(soup),
-            "costs": self.get_costs(soup),
-            "angaben": self.get_angaben(soup),
-            "details": self.get_details(soup),
-            "availability": self.get_availability(soup),
-            "check_available": self.check_wg_available(soup),
-            "wg_images": self.get_wg_images(soup)
-        }
+        if "https://www.wg-gesucht.de/cuba.html" in self.current_url:
+            return 1
+        else:
+            return {
+                "inserat_id": inserat_id,
+                "title": self.get_title(soup),
+                "address": self.get_address(soup),
+                "sizes": self.get_sizes(soup),
+                "costs": self.get_costs(soup),
+                "angaben": self.get_angaben(soup),
+                "details": self.get_details(soup),
+                "availability": self.get_availability(soup),
+                "check_available": self.check_wg_available(soup),
+                "wg_images": self.get_wg_images(soup)
+            }
 
     def insert_into_inserate(self, parsed_wg):
         """
