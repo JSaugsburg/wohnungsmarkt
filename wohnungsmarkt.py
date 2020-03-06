@@ -77,9 +77,9 @@ class WgGesucht(WohnungsMarkt):
     inserat_sql = """
         INSERT INTO wg_gesucht.inserate (inserat_id, viertel, titel,
         miete_gesamt, miete_kalt, miete_sonstige, nebenkosten,
-        kaution, abstandszahlung, verfuegbar, insert_date, stadt,
-        frei_ab, frei_bis, adresse, groesse, mitbewohner, wohnungs_type) VALUES
-        (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s);
+        kaution, abstandszahlung, verfuegbar, insert_date, stadt, frei_ab,
+        frei_bis, adresse, groesse, mitbewohner, wohnungs_type, angaben) VALUES
+        (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s);
         """
 
     images_sql = """
@@ -94,6 +94,11 @@ class WgGesucht(WohnungsMarkt):
         """
 
     session = requests.Session()
+    # store current page content
+    p_cnt = 0
+    soup = None
+    urls = []
+    current_url = None
 
     def __init__(self, wtype, stadt):
         """
@@ -110,10 +115,6 @@ class WgGesucht(WohnungsMarkt):
         super().__init__()
         self.wtype = wtype
         self.stadt = stadt
-        # store current page content
-        self.p_cnt = 0
-        self.soup = None
-        self.urls = []
         self.config.read("cfg.ini")
         self.viertel = self.__get_viertel(stadt)
         self.roads = self.__get_roads(stadt)
@@ -217,21 +218,7 @@ class WgGesucht(WohnungsMarkt):
         """
 
         r = self.http_get(url)
-        # check if url is in "cuba"
-        print(r.url)
-        i = 0
-        while "https://www.wg-gesucht.de/cuba.html" in r.url:
-            # 9 tries
-            if i < 10:
-                c = random.choice([15, 16, 17, 18, 19, 20])
-                print(f"Captcha appeared! Waiting {c} minutes")
-                print(i)
-                time.sleep(c * 60)
-                r = self.http_get(url)
-                print(r.url)
-                i += 1
-            else:
-                sys.exit(1)
+        self.current_url = r.url
 
         # only allow content type "text/html"
         if "text/html" in r.headers["Content-Type"]:
@@ -513,22 +500,25 @@ class WgGesucht(WohnungsMarkt):
         h3 = soup.find_all(
             "h3", class_="headline headline-detailed-view-panel-title"
         )
-        angaben_row = [
-            x.parent for x in h3 if x.text.strip() == "Angaben zum Objekt"
-        ][0]
-        # filter hidden div tags and div tags that have a span tag
-        a_filtered = [
-            x for x in angaben_row.find_all("div") if (
-                x.span and not "aria-hidden" in x.span.attrs
-            )
-        ]
-        # (house type, wifi, furniture, parking, ...)
-        # create dict of items
-        angaben_dict = dict([
-            (x.span.attrs["class"][1].split("-", 1)[1],
-             " ".join(x.text.replace("\n", "").strip().split())
-             ) for x in a_filtered
-        ])
+        try:
+            angaben_row = [
+                x.parent for x in h3 if x.text.strip() == "Angaben zum Objekt"
+            ][0]
+            # filter hidden div tags and div tags that have a span tag
+            a_filtered = [
+                x for x in angaben_row.find_all("div") if (
+                    x.span and not "aria-hidden" in x.span.attrs
+                )
+            ]
+            # (house type, wifi, furniture, parking, ...)
+            # create dict of items
+            angaben_dict = dict([
+                (x.span.attrs["class"][1].split("-", 1)[1],
+                 " ".join(x.text.replace("\n", "").strip().split())
+                 ) for x in a_filtered
+            ])
+        except IndexError:
+            angaben_dict = None
 
         return angaben_dict
 
@@ -711,7 +701,8 @@ class WgGesucht(WohnungsMarkt):
             Json(parsed_wg["address"]),
             Json(parsed_wg["sizes"]),
             parsed_wg["details"]["roommates_bytes"],
-            self.wtype
+            self.wtype,
+            Json(parsed_wg["angaben"])
         ]
         self.execute_sql(self.cur,
                          self.inserat_sql,
