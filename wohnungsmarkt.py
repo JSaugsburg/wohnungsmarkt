@@ -115,7 +115,9 @@ class WgGesucht(WohnungsMarkt):
         super().__init__()
         self.wtype = wtype
         self.stadt = stadt
-        self.config.read("cfg.ini")
+        self.config.read(
+            os.path.dirname(os.path.realpath(__file__)) + "/cfg.ini"
+        )
         self.viertel = self.__get_viertel(stadt)
         self.roads = self.__get_roads(stadt)
         self.inserat_ids = self.__get_inserat_ids(stadt, wtype)
