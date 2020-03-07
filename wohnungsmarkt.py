@@ -154,7 +154,7 @@ class WgGesucht(WohnungsMarkt):
         # os.walk creates generator
         # ("root", ["dirs"], ["files"])
         root, _, files = list(
-            os.walk("geojson/" + city.lower() + "/viertel")
+            os.walk(sys.path[0] + "geojson/" + city.lower() + "/viertel")
         )[0]
         # create GeoDataFrame from all available "viertel"
         gdf = gpd.GeoDataFrame(
