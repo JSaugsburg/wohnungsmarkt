@@ -116,7 +116,7 @@ class WgGesucht(WohnungsMarkt):
         self.wtype = wtype
         self.stadt = stadt
         self.config.read("cfg.ini")
-        # self.viertel = self.__get_viertel(stadt)
+        self.viertel = self.__get_viertel(stadt)
         self.roads = self.__get_roads(stadt)
         self.inserat_ids = self.__get_inserat_ids(stadt, wtype)
         self.__sign_in()
@@ -154,7 +154,8 @@ class WgGesucht(WohnungsMarkt):
         # os.walk creates generator
         # ("root", ["dirs"], ["files"])
         root, _, files = list(
-            os.walk(sys.path[0] + "/geojson/" + city.lower() + "/viertel")
+            os.walk(os.path.dirname(os.path.realpath(__file__)) \
+                    + "/geojson/" + city.lower() + "/viertel")
         )[0]
         # create GeoDataFrame from all available "viertel"
         gdf = gpd.GeoDataFrame(
@@ -174,7 +175,8 @@ class WgGesucht(WohnungsMarkt):
         """
         # create GeoDataFrame from "city"_roads.geojson file
         gdf = gpd.read_file(
-            "geojson/" + city.lower() + "/" + city.lower() + "_roads.geojson"
+            os.path.dirname(os.path.realpath(__file__)) + "/geojson/" \
+            + city.lower() + "/" + city.lower() + "_roads.geojson"
         )
 
         return gdf
