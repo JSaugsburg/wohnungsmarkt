@@ -1,8 +1,10 @@
+from datetime import datetime
 from wohnungsmarkt import WgGesucht
 import random
 import sys
 import time
 
+print(datetime.now())
 wg = WgGesucht(1, "Augsburg")
 p_cnt = wg.get_page_counter()
 if p_cnt == 1:
