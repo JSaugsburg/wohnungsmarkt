@@ -116,7 +116,7 @@ class WgGesucht(WohnungsMarkt):
         self.wtype = wtype
         self.stadt = stadt
         self.config.read("cfg.ini")
-        self.viertel = self.__get_viertel(stadt)
+        # self.viertel = self.__get_viertel(stadt)
         self.roads = self.__get_roads(stadt)
         self.inserat_ids = self.__get_inserat_ids(stadt, wtype)
         self.__sign_in()
