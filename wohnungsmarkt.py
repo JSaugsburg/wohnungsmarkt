@@ -78,8 +78,9 @@ class WgGesucht(WohnungsMarkt):
         INSERT INTO wg_gesucht.inserate (inserat_id, viertel, titel,
         miete_gesamt, miete_kalt, miete_sonstige, nebenkosten,
         kaution, abstandszahlung, verfuegbar, insert_date, stadt, frei_ab,
-        frei_bis, adresse, groesse, mitbewohner, wohnungs_type, angaben) VALUES
-        (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s);
+        frei_bis, adresse, groesse, mitbewohner, wohnungs_type, angaben,
+        details) VALUES
+        (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s, %s);
         """
 
     images_sql = """
@@ -529,6 +530,47 @@ class WgGesucht(WohnungsMarkt):
 
         return angaben_dict
 
+    def get_roommates(self, soup):
+        """
+
+        Get roommates of wg
+
+        :soup: BeautifulSoup object
+        :returns: bytes
+
+        """
+
+        h3 = soup.find_all(
+            "h3", class_="headline headline-detailed-view-panel-title"
+        )
+        details = [
+            x for x in h3 if x.text.strip() == "WG-Details"
+        ][0].parent.parent
+        d_list = [
+            " ".join(x.text.strip().replace("\n", "").split()) for x in
+                  details.find_all("li")
+        ]
+        # "Bewohneralter" is optional; so insert None at given position
+        d_list = [(x if x != "" else None) for x in d_list]
+        # check if last list element indicates that room is unavailable
+        if "momentan vermietet" in details.find_all("li")[-1].text:
+            r_all = int(re.findall(r'\d+', d_list[2])[0])
+            roommates_bytes = bytes([r_all, 0, 0, 0])
+        else:
+            # parse roommates:
+            # 4 Bytes [FF: All, FF: Women, FF: Men, FF: Diverse]
+            r = soup.find_all("span", title=re.compile("WG"))[0]
+            r_title = r.get("title")
+            r_splits = r_title.split(" ")
+            # format for roommates: 2er WG (1 Frau und 0 Männer und 0 Divers)
+            r_all = int("".join([x for x in r_splits[0] if x.isdigit()]))
+            comp = r_splits[2]
+            r_comp = [int(re.findall(r'\d+', x)[0]) for x in comp.split(",")]
+
+            roommates_bytes = bytes([r_all] + r_comp)
+
+        return roommates_bytes
+
     def get_details(self, soup):
         """
 
@@ -558,31 +600,15 @@ class WgGesucht(WohnungsMarkt):
         if len(d_list) == 7:
             d_list.insert(4, None)
 
-        # parse roommates:
-        # 4 Bytes [FF: All, FF: Women, FF: Men, FF: Diverse]
-        r = soup.find_all("span", title=re.compile("WG"))[0]
-        r_title = r.get("title")
-        r_splits = r_title.split(" ")
-        # format for roommates: 2er WG (1 Frau und 0 Männer und 0 Divers)
-        r_all = int("".join([x for x in r_splits[0] if x.isdigit()]))
-        comp = r_splits[2]
-        r_comp = [int(re.findall(r'\d+', x)[0]) for x in comp.split(",")]
-        # r_w = int(r_splits[2].strip("("))
-        # r_m = int(r_splits[5])
-        # r_d = int(r_splits[8])
-
-        roommates_bytes = bytes(r_comp)
 
         return  {
             "wg_size": d_list[0],
             "wohnung_size": d_list[1],
-            "roommates": d_list[2],
             "roommate_age": d_list[3],
             "smoking": d_list[4],
             "wg_type": d_list[5],
             "languages": d_list[6],
-            "looking_for": d_list[7],
-            "roommates_bytes": roommates_bytes
+            "looking_for": d_list[7]
         }
 
     def get_availability(self, soup):
@@ -681,7 +707,8 @@ class WgGesucht(WohnungsMarkt):
                 "details": self.get_details(soup),
                 "availability": self.get_availability(soup),
                 "check_available": self.check_wg_available(soup),
-                "wg_images": self.get_wg_images(soup)
+                "wg_images": self.get_wg_images(soup),
+                "roommates": self.get_roommates(soup)
             }
 
     def insert_into_inserate(self, parsed_wg):
@@ -710,9 +737,10 @@ class WgGesucht(WohnungsMarkt):
             parsed_wg["availability"]["frei_bis"],
             Json(parsed_wg["address"]),
             Json(parsed_wg["sizes"]),
-            parsed_wg["details"]["roommates_bytes"],
+            parsed_wg["roommates"],
             self.wtype,
-            Json(parsed_wg["angaben"])
+            Json(parsed_wg["angaben"]),
+            Json(parsed_wg["details"])
         ]
         self.execute_sql(self.cur,
                          self.inserat_sql,
