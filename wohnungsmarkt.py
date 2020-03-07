@@ -622,46 +622,50 @@ class WgGesucht(WohnungsMarkt):
 
         """
 
-        # availability
-        h3 = soup.find_all(
-            "h3", class_="headline headline-detailed-view-panel-title"
-        )
-        avlblty_row = [
-            x for x in h3 if x.text.strip() == "Verfügbarkeit"
-        ][0].parent.parent
-        avlblty_p = avlblty_row.p.text.splitlines()
-        avlblty_l = [
-            x.strip() for x in avlblty_p if x.strip() != ""
-        ]
-        avlblty_dict = {
-            "frei_ab": datetime.strptime(avlblty_l[1], "%d.%m.%Y").isoformat()
-        }
-        # "frei bis" is optional so check list length
-        if len(avlblty_l) == 4:
-            avlblty_dict["frei_bis"] = datetime.strptime(
-                avlblty_l[3], "%d.%m.%Y"
-            ).isoformat()
-        else:
-            avlblty_dict["frei_bis"] = None
-        # since when is offer online?
-        online_raw = soup.find_all("b", class_="noprint")
-        online_since = online_raw[0].text.strip().split(": ")[1]
-        # deduct time delta
-        if "Minute" in online_since:
-            # t = int(online_since.split(": ")[1].split(" Minute")[0])
-            t = int(online_since.split(" Minute")[0])
-            insert_datetime = datetime.now() - timedelta(minutes=t)
-        elif "Stunde" in online_since:
-            # t = int(online_since.split(": ")[1].split("Stunde")[0])
-            t = int(online_since.split(" Stunde")[0])
-            insert_datetime = datetime.now() - timedelta(hours=t)
-        elif "Tag" in online_since:
-            t = int(online_since.split(" Tag")[0])
-            insert_datetime = datetime.now() - timedelta(days=t)
-        else:
-            insert_datetime = datetime.strptime(online_since, "%d.%m.%Y")
+        if self.check_wg_available(soup):
+            # availability
+            h3 = soup.find_all(
+                "h3", class_="headline headline-detailed-view-panel-title"
+            )
+            avlblty_row = [
+                x for x in h3 if x.text.strip() == "Verfügbarkeit"
+            ][0].parent.parent
+            avlblty_p = avlblty_row.p.text.splitlines()
+            avlblty_l = [
+                x.strip() for x in avlblty_p if x.strip() != ""
+            ]
+            avlblty_dict = {
+                "frei_ab": datetime.strptime(avlblty_l[1], "%d.%m.%Y").isoformat()
+            }
+            # "frei bis" is optional so check list length
+            if len(avlblty_l) == 4:
+                avlblty_dict["frei_bis"] = datetime.strptime(
+                    avlblty_l[3], "%d.%m.%Y"
+                ).isoformat()
+            else:
+                avlblty_dict["frei_bis"] = None
+            # since when is offer online?
+            online_raw = soup.find_all("b", class_="noprint")
+            online_since = online_raw[0].text.strip().split(": ")[1]
+            # deduct time delta
+            if "Minute" in online_since:
+                # t = int(online_since.split(": ")[1].split(" Minute")[0])
+                t = int(online_since.split(" Minute")[0])
+                insert_datetime = datetime.now() - timedelta(minutes=t)
+            elif "Stunde" in online_since:
+                # t = int(online_since.split(": ")[1].split("Stunde")[0])
+                t = int(online_since.split(" Stunde")[0])
+                insert_datetime = datetime.now() - timedelta(hours=t)
+            elif "Tag" in online_since:
+                t = int(online_since.split(" Tag")[0])
+                insert_datetime = datetime.now() - timedelta(days=t)
+            else:
+                insert_datetime = datetime.strptime(online_since, "%d.%m.%Y")
 
-        avlblty_dict["insert_dt"] = insert_datetime
+            avlblty_dict["insert_dt"] = insert_datetime
+        else:
+            # wg is opccupied
+            avlblty_dict = None
 
         return avlblty_dict
 
