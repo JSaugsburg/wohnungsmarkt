@@ -77,7 +77,7 @@ class WgGesucht(WohnungsMarkt):
     inserat_sql = """
         INSERT INTO wg_gesucht.inserate (inserat_id, viertel, titel,
         miete_gesamt, miete_kalt, miete_sonstige, nebenkosten,
-        kaution, abstandszahlung, verfuegbar, insert_date, stadt, frei_ab,
+        kaution, abstandszahlung, verfuegbar, online_seit, stadt, frei_ab,
         frei_bis, adresse, groesse, mitbewohner, wohnungs_type, angaben,
         details) VALUES
         (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s, %s);
