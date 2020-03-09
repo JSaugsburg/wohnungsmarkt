@@ -665,7 +665,11 @@ class WgGesucht(WohnungsMarkt):
             avlblty_dict["insert_dt"] = insert_datetime
         else:
             # wg is opccupied
-            avlblty_dict = None
+            avlblty_dict = {
+                "frei_ab": None,
+                "frei_bis": None,
+                "insert_dt": None
+            }
 
         return avlblty_dict
 
