@@ -22,10 +22,10 @@ class WohnungsMarkt:
     """
 
     wtype_dict = {
-        1: "wg-zimmer",
-        2: "1-zimmer-wohnungen",
-        3: "wohnungen",
-        4: "haeuser"
+        0: "wg-zimmer",
+        1: "1-zimmer-wohnungen",
+        2: "wohnungen",
+        3: "haeuser"
     }
 
     city_codes = {
@@ -124,7 +124,7 @@ class WgGesucht(WohnungsMarkt):
         self.inserat_ids = self.__get_inserat_ids(stadt, wtype)
         self.__sign_in()
         self.get_string = self.url + self.wtype_dict[wtype] \
-        + "-in-" + stadt + "." + self.city_codes[stadt] + ".0.0."
+        + "-in-" + stadt + "." + self.city_codes[stadt] + f".{wtype}.0."
 
     def __get_inserat_ids(self, city, wtype):
         """
