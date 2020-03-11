@@ -359,7 +359,12 @@ class WgGesucht(WohnungsMarkt):
         if img_link == "https://img.wg-gesucht.de/":
             img_raw = None
         else:
-            img_raw = self.http_get(img_link).content
+            # wg_gesucht seems to delete images
+            # http requests result in 404
+            try:
+                img_raw = self.http_get(img_link).content
+            except requests.exceptions.HTTPError:
+                img_raw = None
 
         return img_raw
 
