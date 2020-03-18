@@ -6,11 +6,9 @@ import os
 import pandas as pd
 import psycopg2
 from psycopg2.extras import Json
-import random
 import re
 import requests
 import sys
-import time
 
 
 class WohnungsMarkt:
@@ -21,7 +19,7 @@ class WohnungsMarkt:
 
     """
 
-    wtype_dict = {
+    wtype_d = {
         0: "wg-zimmer",
         1: "1-zimmer-wohnungen",
         2: "wohnungen",
@@ -34,6 +32,7 @@ class WohnungsMarkt:
 
     conn = psycopg2.connect("dbname=wohnungsmarkt_db user=sepp")
     config = configparser.ConfigParser()
+    session = requests.Session()
 
     def __init__(self):
         self.conn.autocommit = True
@@ -56,6 +55,27 @@ class WohnungsMarkt:
                 )
         except requests.ConnectionError:
             raise url + " probably offline!"
+
+    def http_get_to_soup(self, url):
+        """
+        HTTP get request to the desired url
+        transforms text-content to BeautifulSoup object
+
+        :url: http-string (string)
+        :returns: BeautifulSoup object
+        """
+
+        r = self.http_get(url)
+        self.current_url = r.url
+
+        # only allow content type "text/html"
+        if "text/html" in r.headers["Content-Type"]:
+            soup = BeautifulSoup(r.text, "lxml")
+            self.soup = soup
+            return soup
+        else:
+            print(f"Expected Content Type text/html, but got \
+                  {r.headers['Content-Type']} instead")
 
     def execute_sql(self, cursor, sql_str, params):
         """
@@ -94,7 +114,6 @@ class WgGesucht(WohnungsMarkt):
         AND wohnungs_type = %s;
         """
 
-    session = requests.Session()
     # store current page content
     p_cnt = 0
     soup = None
@@ -105,10 +124,10 @@ class WgGesucht(WohnungsMarkt):
         """
 
         :wtype = {
-            1: "wg",
-            2: "1-zimmer-wohnung",
-            3: "wohnung",
-            4: "haus"
+            0: "wg",
+            1: "1-zimmer-wohnung",
+            2: "wohnung",
+            3: "haus"
         }
         :stadt: welche Stadt? (string)
 
@@ -122,9 +141,41 @@ class WgGesucht(WohnungsMarkt):
         self.viertel = self.__get_viertel(stadt)
         self.roads = self.__get_roads(stadt)
         self.inserat_ids = self.__get_inserat_ids(stadt, wtype)
-        self.__sign_in()
-        self.get_string = self.url + self.wtype_dict[wtype] \
+        self.__sign_in(
+            "https://www.wg-gesucht.de/ajax/api/Smp/api.php?action=login"
+        )
+        self.get_string = self.url + self.wtype_d[wtype] \
         + "-in-" + stadt + "." + self.city_codes[stadt] + f".{wtype}.0."
+
+    def __sign_in(self, login_str):
+        """
+
+        sign in to wg_gesucht.de with default credentials from cfg.ini
+        sets requests session
+
+        """
+
+        payload = {
+            "login_email_username": self.config["WGGESUCHT"]["email"],
+            "login_password": self.config["WGGESUCHT"]["pw"],
+            "login_form_auto_login": "1",
+            "display_language": "de",
+        }
+
+        try:
+            login = self.session.post(
+                login_str,
+                json=payload,
+            )
+        except requests.exceptions.Timeout:
+            print("Timed out trying to log in")
+        except requests.exceptions.ConnectionError:
+            print("Could not connect to internet")
+
+        if not login.json():
+            print("Could not log in with the given email and password")
+            sys.exit(1)
+
 
     def __get_inserat_ids(self, city, wtype):
         """
@@ -183,56 +234,6 @@ class WgGesucht(WohnungsMarkt):
         )
 
         return gdf
-
-    def __sign_in(self):
-        """
-
-        sign in to wg_gesucht.de with default credentials from cfg.ini
-        sets requests session
-
-        """
-
-        payload = {
-            "login_email_username": self.config["WGGESUCHT"]["email"],
-            "login_password": self.config["WGGESUCHT"]["pw"],
-            "login_form_auto_login": "1",
-            "display_language": "de",
-        }
-
-        try:
-            login = self.session.post(
-                "https://www.wg-gesucht.de/ajax/api/Smp/api.php?action=login",
-                json=payload,
-            )
-        except requests.exceptions.Timeout:
-            print("Timed out trying to log in")
-        except requests.exceptions.ConnectionError:
-            print("Could not connect to internet")
-
-        if not login.json():
-            print("Could not log in with the given email and password")
-            sys.exit(1)
-
-    def http_get_to_soup(self, url):
-        """
-        HTTP get request to the desired url
-        transforms text-content to BeautifulSoup object
-
-        :url: http-string (string)
-        :returns: BeautifulSoup object
-        """
-
-        r = self.http_get(url)
-        self.current_url = r.url
-
-        # only allow content type "text/html"
-        if "text/html" in r.headers["Content-Type"]:
-            soup = BeautifulSoup(r.text, "lxml")
-            self.soup = soup
-            return soup
-        else:
-            print(f"Expected Content Type text/html, but got \
-                  {r.headers['Content-Type']} instead")
 
     def nominatim_request(self, string_l):
         """
@@ -367,6 +368,536 @@ class WgGesucht(WohnungsMarkt):
                 img_raw = None
 
         return img_raw
+
+    def get_address(self, soup):
+        """
+
+        Retrieve address of wg
+        address is hidden in link ("a")
+
+        :soup: BeautifulSoup object
+        :returns: address dictionary
+                 {
+                "street": ...,
+                "house_number": ...,
+                "plz": ...,
+                "viertel": ...
+                }
+
+        """
+
+        # get address; hidden in link ("a")
+        address = soup.find("div", class_="col-sm-4 mb10").text.strip()
+        # parse for "newline" and split
+        address_list = [
+            x.strip() for x in address.splitlines() if x.strip() != ""
+        ]
+        # street and house number
+        # extract house number; house number is not mandatory!
+        if any(i.isdigit() for i in address_list[1]):
+            house_number = address_list[1].split(" ")[-1]
+            # because it is not known how many elements a street contains
+            # it is necessary to split first
+            street = " ".join(address_list[1].split(" ")[:-1])
+        else:
+            house_number = None
+            street = " ".join(address_list[1].split(" "))
+        plz = address_list[2].split(" ")[0]
+        viertel = " ".join(address_list[2].split(" ")[2:])
+
+        return {
+            "street": street,
+            "house_number": house_number,
+            "plz": plz,
+            "viertel": viertel
+        }
+
+    def get_sizes(self, soup):
+        """
+
+        Get size of wg
+        (room, total)
+
+        :soup: BeautifulSoup object
+        :returns: TODO
+
+        """
+
+        # basic facts
+        basic = soup.find("div", id="basic_facts_wrapper")
+        # room size
+        rent_wrapper = basic.find("div", id="rent_wrapper")
+        # total size of living object
+        size_all_raw = rent_wrapper.find(
+            "div",
+            class_="basic_facts_top_part"
+        ).find("label", class_="amount").text.strip()
+        # size_all not mandatory; change 'n.a.' to None
+        if size_all_raw == "n.a.":
+            size_all = None
+        else:
+            # strip m² from string
+            size_all = size_all_raw.replace("m²", "")
+        # wg type
+        wg_desc = rent_wrapper.find(
+            "label",
+            class_="description").text.strip()
+        # wg size room
+        room_size_raw = rent_wrapper.find(
+            "div",
+            class_="basic_facts_bottom_part"
+        ).find("label").text.strip()
+        if room_size_raw == "n.a.":
+            room_size = None
+        else:
+            room_size = room_size_raw.replace("m²", "")
+
+        return {
+            "size_all": size_all,
+            "wg_type_all": wg_desc,
+            "room_size": room_size
+        }
+
+    def get_costs(self, soup):
+        """
+
+        Get costs of wg
+        (miete, nebenkosten,
+        sonstiges, kaution, abstandszahlung)
+
+        :soup: BeautifulSoup object
+        :returns: TODO
+
+        """
+
+        # basic facts
+        basic = soup.find("div", id="basic_facts_wrapper")
+        # costs
+        graph_wrapper = basic.find("div", id="graph_wrapper")
+        # rent; [1:] to remove first element
+        cost_html_elements = graph_wrapper.find_all("div")[1:]
+        # Indices: 0->sonstiges;1->Nebenkosten;2->Miete;3->Gesamt
+        rent_list = []
+        for e in cost_html_elements:
+            text = e.text.strip().splitlines()[0].replace("€", "")
+            rent_list.append(None if text == "n.a." else text)
+        # kaution
+        provision_eq = basic.find_all("div", class_="provision-equipment")
+        provision = provision_eq[0].find("label").text.strip()
+        # replace n.a. with None
+        provision = None if provision == "n.a." else provision.replace("€", "")
+        # Abstandszahlung
+        abst = provision_eq[1].find("label").text.strip()
+        abst = None if abst == "n.a." else abst.replace("€", "")
+
+        return {
+            "others": rent_list[0],
+            "extra": rent_list[1],
+            "rent": rent_list[2],
+            "rent_all": rent_list[3],
+            "deposit": provision,
+            "transfer_fee": abst
+        }
+
+    def get_angaben(self, soup):
+        """
+
+        Get angaben of wg
+        (house type, wifi, furniture, parking, ...)
+
+        :soup: BeautifulSoup object
+        :returns: dict
+
+        """
+
+        # angaben zum objekt
+        h3 = soup.find_all(
+            "h3", class_="headline headline-detailed-view-panel-title"
+        )
+        try:
+            angaben_row = [
+                x.parent for x in h3 if x.text.strip() == "Angaben zum Objekt"
+            ][0]
+            # filter hidden div tags and div tags that have a span tag
+            a_filtered = [
+                x for x in angaben_row.find_all("div") if (
+                    x.span and not "aria-hidden" in x.span.attrs
+                )
+            ]
+            # (house type, wifi, furniture, parking, ...)
+            # create dict of items
+            angaben_dict = dict([
+                (x.span.attrs["class"][1].split("-", 1)[1],
+                 " ".join(x.text.replace("\n", "").strip().split())
+                 ) for x in a_filtered
+            ])
+        except IndexError:
+            angaben_dict = None
+
+        return angaben_dict
+
+    def get_roommates(self, soup):
+        """
+
+        Get roommates of wg
+
+        :soup: BeautifulSoup object
+        :returns: bytes
+
+        """
+
+        h3 = soup.find_all(
+            "h3", class_="headline headline-detailed-view-panel-title"
+        )
+        details = [
+            x for x in h3 if x.text.strip() == "WG-Details"
+        ][0].parent.parent
+        d_list = [
+            " ".join(x.text.strip().replace("\n", "").split()) for x in
+                  details.find_all("li")
+        ]
+        # "Bewohneralter" is optional; so insert None at given position
+        d_list = [(x if x != "" else None) for x in d_list]
+        # check if last list element indicates that room is unavailable
+        if "momentan vermietet" in details.find_all("li")[-1].text:
+            r_all = int(re.findall(r'\d+', d_list[2])[0])
+            roommates_bytes = bytes([r_all, 0, 0, 0])
+        else:
+            # parse roommates:
+            # 4 Bytes [FF: All, FF: Women, FF: Men, FF: Diverse]
+            r = soup.find_all("span", title=re.compile("WG"))[0]
+            r_title = r.get("title")
+            r_splits = r_title.split(" ")
+            # format for roommates: 2er WG (1 Frau und 0 Männer und 0 Divers)
+            r_all = int("".join([x for x in r_splits[0] if x.isdigit()]))
+            comp = r_splits[2]
+            r_comp = [int(re.findall(r'\d+', x)[0]) for x in comp.split(",")]
+
+            roommates_bytes = bytes([r_all] + r_comp)
+
+        return roommates_bytes
+
+    def get_details(self, soup):
+        """
+
+        Get details of wg
+        (roommates, constellation, age, smoking, ...)
+
+        :soup: BeautifulSoup object
+        :returns: dict
+
+        """
+
+        # wg-details
+        h3 = soup.find_all(
+            "h3", class_="headline headline-detailed-view-panel-title"
+        )
+        details = [
+            x for x in h3 if x.text.strip() == "WG-Details"
+        ][0].parent.parent
+        d_list = [
+            " ".join(x.text.strip().replace("\n", "").split()) for x in
+                  details.find_all("li")
+        ]
+        # "Bewohneralter" is optional; so insert None at given position
+        d_list = [(x if x != "" else None) for x in d_list]
+
+        # "Rauchen" is optional so add None if not present
+        if len(d_list) == 7:
+            d_list.insert(4, None)
+
+
+        return  {
+            "wg_size": d_list[0],
+            "wohnung_size": d_list[1],
+            "roommate_age": d_list[3],
+            "smoking": d_list[4],
+            "wg_type": d_list[5],
+            "languages": d_list[6],
+            "looking_for": d_list[7]
+        }
+
+    def get_availability(self, soup):
+        """
+
+        Get availability
+        (from, until, online since)
+
+        :soup: BeautifulSoup object
+        :returns: avlblty_dict
+
+        """
+
+        if self.check_wg_available(soup):
+            # availability
+            h3 = soup.find_all(
+                "h3", class_="headline headline-detailed-view-panel-title"
+            )
+            avlblty_row = [
+                x for x in h3 if x.text.strip() == "Verfügbarkeit"
+            ][0].parent.parent
+            avlblty_p = avlblty_row.p.text.splitlines()
+            avlblty_l = [
+                x.strip() for x in avlblty_p if x.strip() != ""
+            ]
+            avlblty_dict = {
+                "frei_ab": datetime.strptime(avlblty_l[1], "%d.%m.%Y").isoformat()
+            }
+            # "frei bis" is optional so check list length
+            if len(avlblty_l) == 4:
+                avlblty_dict["frei_bis"] = datetime.strptime(
+                    avlblty_l[3], "%d.%m.%Y"
+                ).isoformat()
+            else:
+                avlblty_dict["frei_bis"] = None
+            # since when is offer online?
+            online_raw = soup.find_all("b", class_="noprint")
+            online_since = online_raw[0].text.strip().split(": ")[1]
+            # deduct time delta
+            if "Minute" in online_since:
+                # t = int(online_since.split(": ")[1].split(" Minute")[0])
+                t = int(online_since.split(" Minute")[0])
+                insert_datetime = datetime.now() - timedelta(minutes=t)
+            elif "Stunde" in online_since:
+                # t = int(online_since.split(": ")[1].split("Stunde")[0])
+                t = int(online_since.split(" Stunde")[0])
+                insert_datetime = datetime.now() - timedelta(hours=t)
+            elif "Tag" in online_since:
+                t = int(online_since.split(" Tag")[0])
+                insert_datetime = datetime.now() - timedelta(days=t)
+            else:
+                insert_datetime = datetime.strptime(online_since, "%d.%m.%Y")
+
+            avlblty_dict["insert_dt"] = insert_datetime
+        else:
+            # wg is opccupied
+            avlblty_dict = {
+                "frei_ab": None,
+                "frei_bis": None,
+                "insert_dt": None
+            }
+
+        return avlblty_dict
+
+    def check_wg_available(self, soup):
+        """
+
+        checks for h4 element in html with keyword "deaktiviert"
+
+        :wg_url: url to wg advert (string)
+
+        :returns: Bool if inserat is available
+        """
+
+        hfours = soup.find_all("h4", class_="headline alert-primary-headline")
+        check = [x for x in hfours if "deaktiviert" in x.text]
+
+        # 0 no alerts -> wg is available
+        # > 1 alters -> wg is unavailable
+        return len(check) == 0
+
+    def parse_wgs(self, wg_url):
+        """
+
+        Parse content of wg advert
+
+        :wg_url: url to wg advert (string)
+
+        :returns: combined dictionary with all info of inserat
+
+        """
+        inserat_id = self.get_id_of_url(wg_url)
+        soup = self.http_get_to_soup(wg_url)
+        if "https://www.wg-gesucht.de/cuba.html" in self.current_url:
+            return 1
+        else:
+            return {
+                "inserat_id": inserat_id,
+                "title": self.get_title(soup),
+                "address": self.get_address(soup),
+                "sizes": self.get_sizes(soup),
+                "costs": self.get_costs(soup),
+                "angaben": self.get_angaben(soup),
+                "details": self.get_details(soup),
+                "availability": self.get_availability(soup),
+                "check_available": self.check_wg_available(soup),
+                "wg_images": self.get_wg_images(soup),
+                "roommates": self.get_roommates(soup)
+            }
+
+    def insert_into_inserate(self, parsed_wg):
+        """
+
+        Inserts parsed wg page into DB
+        Used in conjunction with self.parse_wg
+
+        :parsed_wg: items to fill into wg_gesucht.inserate (dict)
+
+        """
+        preped_l = [
+            parsed_wg["inserat_id"],
+            parsed_wg["address"]["viertel"] + "_" + self.stadt,
+            parsed_wg["title"],
+            parsed_wg["costs"]["rent_all"],
+            parsed_wg["costs"]["rent"],
+            parsed_wg["costs"]["others"],
+            parsed_wg["costs"]["extra"],
+            parsed_wg["costs"]["deposit"],
+            parsed_wg["costs"]["transfer_fee"],
+            parsed_wg["check_available"],
+            parsed_wg["availability"]["insert_dt"],
+            self.stadt,
+            parsed_wg["availability"]["frei_ab"],
+            parsed_wg["availability"]["frei_bis"],
+            Json(parsed_wg["address"]),
+            Json(parsed_wg["sizes"]),
+            parsed_wg["roommates"],
+            self.wtype,
+            Json(parsed_wg["angaben"]),
+            Json(parsed_wg["details"])
+        ]
+        self.execute_sql(self.cur,
+                         self.inserat_sql,
+                         preped_l)
+
+        self.insert_into_images(
+            parsed_wg["inserat_id"], parsed_wg["wg_images"]
+        )
+
+    def insert_into_images(self, inserat_id, images_bytes):
+        """
+
+        Inserts bytes of image into DB
+        Used in conjunction with self.get_wg_images
+
+        :inserat_id: uid of inserat
+        :images_bytes: bytes of image to fill into wg_gesucht.images_inserate
+
+        """
+        self.execute_sql(self.cur,
+                         self.images_sql,
+                         [inserat_id, images_bytes])
+
+class ImmoScout(WohnungsMarkt):
+
+    """Docstring for ImmoScout. """
+    main_url = "https://www.immobilienscout24.de"
+    url = main_url + "/Suche/de/bayern/"
+
+    inserat_sql = """
+        INSERT INTO wg_gesucht.inserate (inserat_id, viertel, titel,
+        miete_gesamt, miete_kalt, miete_sonstige, nebenkosten,
+        kaution, abstandszahlung, verfuegbar, online_seit, stadt, frei_ab,
+        frei_bis, adresse, groesse, mitbewohner, wohnungs_type, angaben,
+        details) VALUES
+        (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s, %s);
+        """
+
+    images_sql = """
+        INSERT INTO wg_gesucht.images_inserate (id, image)
+        VALUES (%s,%s);
+        """
+
+    inserat_ids_sql = """
+        SELECT inserat_id FROM wg_gesucht.inserate
+        WHERE stadt = %s
+        AND wohnungs_type = %s;
+        """
+
+    wtype_d = {
+        0: "wg",
+        1: "wohnung-mieten"
+    }
+
+    # current urls of immoscout
+    url_list = []
+
+    def __init__(self, wtype, stadt):
+        """
+        :wtype: wohnungstype code (int)
+        :stadt: welche Stadt? (string)
+
+        """
+        super().__init__()
+        self.wtype = wtype
+        self.stadt = stadt
+        self.get_string = f"{self.url}{stadt.lower()}/{self.wtype_d[wtype]}/?"
+        self.p_cnt = self.get_page_counter()
+
+    def get_page_counter(self):
+        """
+
+        gets count of pages available
+
+        :returns: pg_count (int)
+
+        """
+
+        # reset page counter
+        soup = self.http_get_to_soup(self.get_string)
+        page_counter = len(soup.find_all("select")[0])
+        self.p_cnt = page_counter
+        print(f"There are {page_counter} pages available")
+
+        return page_counter
+
+    def get_urls(self, p_cnt):
+        """
+
+        Retrieve urls of main listing at specific page_counter
+        :p_cnt: page counter (int)
+
+        :returns: available urls of page (list)
+        """
+
+        soup = self.http_get_to_soup(
+            self.get_string + "pagenumber=" + str(p_cnt)
+        )
+
+        # get all entries
+        entries = soup.find_all("div", class_="result-list-entry__data")
+
+        entries_filtered = []
+        for e in entries:
+            realtor = e.find("span", class_="block font-ellipsis")
+            print(realtor)
+            # realtor might be missing; check if there is "von privat" img
+            if not realtor:
+                if e.find("img").get("alt") == "von privat":
+                    entries_filtered.append(e)
+            # filter out limited offers -> "Team HC24 Augsburg"
+            elif realtor.text == "Team HC24 Augsburg":
+                pass
+            else:
+                entries_filtered.append(e)
+
+        # entries_filtered = [
+        #     x for x in entries if x.find(
+        #         "span", class_="block font-ellipsis"
+        #     ).text != "Team HC24 Augsburg"
+        # ]
+        # extract id and concat to main url
+        self.url_list = [
+            self.main_url + x.find("a").get("href") for x in entries_filtered
+        ]
+
+        return self
+
+    def get_title(self, soup):
+        """
+
+        Get Title of wg offer
+        :soup: BeautifulSoup object
+        :returns: title (string)
+
+        """
+
+        main = soup.find("div", id="main_column")
+        # get title
+        title = main.find("h1", class_=re.compile("^headline")).text.strip()
+
+        return title
+
 
     def get_address(self, soup):
         """
