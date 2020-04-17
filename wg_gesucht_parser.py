@@ -1,6 +1,7 @@
 import os
 import re
 import sys
+import time
 import psycopg2
 import requests
 import configparser
@@ -126,18 +127,15 @@ def get_address(soup):
     Retrieve address of wg
 
     :soup: BeautifulSoup object
-    :returns: address dictionary
-             {
-            "street": ...,
-            "house_number": ...,
-            "plz": ...,
-            "viertel": ...
-            }
+    :return: {
+        "city": ...,
+        "street": ...,
+        "house_number": ...,
+        "plz": ...,
+        "viertel": ...,
+        "neighbourhood": ...
 
     """
-
-    # TODO nach Stadtbergen überprüfen
-
     # get respective "div" element
     div_body = soup.find("div", class_="col-sm-8 card_body")
     div_text = soup.find("div", class_="col-xs-11").span.text
@@ -145,21 +143,34 @@ def get_address(soup):
     address_list = [
         " ".join(x.strip().split()) for x in div_text.split("|")[1:]
     ]
-    # Viertel "Uninähe" gibt es nicht; mit "Haunstetten-Nord" ersetzen
-    if "Uninähe" in address_list[0]:
-        address_list[0] = address_list[0].replace(
-            "Uninähe", "Haunstetten-Nord"
-        )
+    # "/" durch " " ersetzen
+    if "/" in address_list[1]:
+        address_list[1] = address_list[1].replace("/", " ")
+    # replace "Nähe" -> only produces ambiguous results
+    if "nähe" in address_list[1].lower():
+        address_list[1] = address_list[1].lower().replace(
+            "nähe", ""
+        ).strip()
     # format params for url
-    params = "+".join(address_list).replace(" ", "+")
+    params = address_list[0].split(" ")[0]+"+"+address_list[1].replace(" ", "+")
     # query nominatim search with given address details
     query_str = "https://nominatim.openstreetmap.org/search?" \
         f"q={params}&format=geojson&addressdetails=1&limit=1"
     print(query_str)
     r = http_get(query_str)
+    # nominatim fairness rules -> wait 3 secs
     address_json = r.json()
     # get feature of FeatureCollection
     feat = address_json["features"][0]
+    print(feat["properties"]["address"])
+
+    # Stadtbergen != Augsburg
+    if "city" in feat["properties"]["address"]:
+        city = feat["properties"]["address"]["city"]
+    elif "town" in feat["properties"]["address"]:
+        city = feat["properties"]["address"]["town"]
+    else:
+        city = None
 
     # check if "house_number" availabe
     if "house_number" in feat["properties"]["address"]:
@@ -167,16 +178,24 @@ def get_address(soup):
     else:
         house_number = None
 
+    # check if "neighbourhood" available
     if "neighbourhood" in feat["properties"]["address"]:
         neighbourhood = feat["properties"]["address"]["neighbourhood"]
     else:
         neighbourhood = None
 
+    # check if "suburb" available
+    if "suburb" in feat["properties"]["address"]:
+        suburb = feat["properties"]["address"]["suburb"]
+    else:
+        suburb = None
+
     return {
+        "city": city,
         "street": feat["properties"]["address"]["road"],
         "house_number": house_number,
         "plz": feat["properties"]["address"]["postcode"],
-        "viertel": feat["properties"]["address"]["suburb"],
+        "viertel": suburb,
         "neighbourhood": neighbourhood
     }
 
@@ -221,9 +240,6 @@ def get_ids(soup):
     :returns: list of ids to available wgs
 
     """
-
-    # TODO parse Adress
-
     # wgs list
     wgs_list = soup.find_all("div", id=re.compile("^liste-details-ad"))
     # filter out "hidden" items
