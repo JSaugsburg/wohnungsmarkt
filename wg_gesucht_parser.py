@@ -33,15 +33,31 @@ city_codes = {
     "Munchen": "90"
 }
 
+angaben_map = {
+    "mixed-buildings": "haustyp",
+    "building": "etage",
+    "bed": "einrichtung",
+    "bath-bathtub": "sanitär",
+    "wifi-alt": "internet",
+    "fabric": "bodenbelag",
+    "car": "parksituation",
+    "bus": "entfernung_öpnv",
+    "folder-closed": "sonstiges",
+    "display": "tv",
+    "leaf": "ökostrom",
+    "fire": "heizung"
+}
+
 get_string = f"{url}{wtype_d[wtype]}-in-{city}.{city_codes[city]}.{wtype}.1."
 
 inserat_sql = """
     INSERT INTO wg_gesucht.inserate (inserat_id, viertel, titel,
     miete_gesamt, miete_kalt, miete_sonstige, nebenkosten,
-    kaution, abstandszahlung, verfuegbar, online_seit, stadt, frei_ab,
-    frei_bis, adresse, groesse, mitbewohner, wohnungs_type, angaben,
-    details) VALUES
-    (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s, %s);
+    kaution, abstandszahlung, verfuegbar, city, frei_ab,
+    frei_bis, groesse, mitbewohner, wohnungs_type, angaben,
+    details, online_seit, realtor, osm_id, strasse, hausnummer,
+    plz, neighbourhood) VALUES
+    (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s);
     """
 
 images_sql = """
@@ -51,10 +67,18 @@ images_sql = """
 
 inserat_ids_sql = """
     SELECT inserat_id FROM wg_gesucht.inserate
-    WHERE stadt = %s
+    WHERE city = %s
     AND wohnungs_type = %s;
     """
 
+osm_ids_sql = """
+    SELECT osm_id FROM gis.osm;
+    """
+
+insert_osm_ids = """
+    INSERT INTO gis.osm (osm_id, fc, city)
+    VALUES (%s,%s,%s);
+    """
 # read config
 config = configparser.ConfigParser()
 config.read(script_path + "/cfg.ini")
@@ -74,6 +98,12 @@ cur.execute(inserat_ids_sql, (city, wtype,))
 rows = cur.fetchall()
 inserat_ids = [x[0] for x in rows] if len(rows) > 0 else []
 print(f"Bisher {len(inserat_ids)} inserate für {city} und {wtype_d[wtype]}")
+
+# get stored osm_ids
+cur.execute(osm_ids_sql)
+rows = cur.fetchall()
+osm_ids = [int(x[0]) for x in rows] if len(rows) > 0 else []
+print(f"Bisher {len(osm_ids)} osm_ids")
 
 # login to wg-gesucht
 session = requests.Session()
@@ -156,48 +186,59 @@ def get_address(soup):
     # query nominatim search with given address details
     query_str = "https://nominatim.openstreetmap.org/search?" \
         f"q={params}&format=geojson&addressdetails=1&limit=1"
-    print(query_str)
     r = http_get(query_str)
     # nominatim fairness rules -> wait 3 secs
     address_json = r.json()
     # get feature of FeatureCollection
-    feat = address_json["features"][0]
-    print(feat["properties"]["address"])
+    print(address_json["features"])
 
-    # Stadtbergen != Augsburg
-    if "city" in feat["properties"]["address"]:
-        city = feat["properties"]["address"]["city"]
-    elif "town" in feat["properties"]["address"]:
-        city = feat["properties"]["address"]["town"]
+    if len(address_json["features"]) == 0:
+        osm_id = None
     else:
-        city = None
+        osm_id = address_json["features"][0]["properties"]["osm_id"]
 
-    # check if "house_number" availabe
-    if "house_number" in feat["properties"]["address"]:
-        house_number = feat["properties"]["address"]["house_number"]
-    else:
-        house_number = None
+    try:
+        feat = address_json["features"][0]
 
-    # check if "neighbourhood" available
-    if "neighbourhood" in feat["properties"]["address"]:
-        neighbourhood = feat["properties"]["address"]["neighbourhood"]
-    else:
-        neighbourhood = None
+        # Stadtbergen != Augsburg
+        if "city" in feat["properties"]["address"]:
+            city = feat["properties"]["address"]["city"]
+        elif "town" in feat["properties"]["address"]:
+            city = feat["properties"]["address"]["town"]
+        else:
+            city = None
 
-    # check if "suburb" available
-    if "suburb" in feat["properties"]["address"]:
-        suburb = feat["properties"]["address"]["suburb"]
-    else:
-        suburb = None
+        # check if "house_number" availabe
+        if "house_number" in feat["properties"]["address"]:
+            house_number = feat["properties"]["address"]["house_number"]
+        else:
+            house_number = None
 
-    return {
-        "city": city,
-        "street": feat["properties"]["address"]["road"],
-        "house_number": house_number,
-        "plz": feat["properties"]["address"]["postcode"],
-        "viertel": suburb,
-        "neighbourhood": neighbourhood
-    }
+        # check if "neighbourhood" available
+        if "neighbourhood" in feat["properties"]["address"]:
+            neighbourhood = feat["properties"]["address"]["neighbourhood"]
+        else:
+            neighbourhood = None
+
+        # check if "suburb" available
+        if "suburb" in feat["properties"]["address"]:
+            suburb = feat["properties"]["address"]["suburb"]
+        else:
+            suburb = None
+
+        return {
+            "city": city,
+            "street": feat["properties"]["address"]["road"],
+            "house_number": house_number,
+            "plz": feat["properties"]["address"]["postcode"],
+            "viertel": suburb,
+            "neighbourhood": neighbourhood,
+            "osm_id": osm_id,
+            "fc": address_json
+        }
+    # keine Features für Adresse verfügbar
+    except IndexError:
+        return None
 
 def get_insert_dt(soup):
     t_string = soup.find_all(
@@ -230,7 +271,21 @@ def get_image(soup):
 
     return img_raw
 
-def get_ids(soup):
+def get_id(soup):
+    inserat_id = soup.get("id").split("-")[-1]
+    print(inserat_id)
+
+    return inserat_id
+
+def is_available(soup):
+    if soup.find("span", class_="ribbon-deactivated"):
+        available = True
+    else:
+        available = False
+
+    return available
+
+def get_details_from_main(soup):
     """
 
     Retrieve availabe ids of adverts from main page
@@ -255,59 +310,29 @@ def get_ids(soup):
     # get genral info of wg inserat from main page
     wg_items = [
         {
-            "id": x.get("id").split("-")[-1],
+            "id": get_id(x),
             "url": url + x.find("a").get("href"),
             "realtor": x.find_all(
                 "div", class_="col-sm-12 flex_space_between"
             )[-1].span.text,
             "insert_dt": get_insert_dt(x),
             "img_raw": get_image(x),
-            "address": get_address(x)
+            "address": get_address(x),
+            "available": is_available(x)
         } for x in wgs_list
     ]
 
     return wg_items
 
-def parse_wg(get_id_dict):
-    wg_url = url + get_id_dict["id"] + ".html"
-    soup = http_get_to_soup(wg_url)
+def parse_wg(details_d):
+    soup = http_get_to_soup(details_d["url"])
 
     # get title
     main = soup.find("div", id="main_column")
     title = main.find("h1", class_=re.compile("^headline")).text.strip()
+    details_d["title"] = title
 
-# read current counter
-with open(script_path + "/wg_counter") as f:
-    wg_counter = f.read()
-print("wg-gesucht momentan bei " + wg_counter)
-
-# get available pages
-soup = http_get_to_soup(get_string + "0.html")
-# find page_bar with numbers of pages
-page_bar = soup.find_all("ul", class_="pagination pagination-sm")[0]
-page_counter = int(page_bar.find_all("li")[-2].get_text().strip())
-print(f"There are {page_counter} pages available")
-
-# iterate lists of inserate
-for i in range(int(wg_counter), page_counter):
-    print(get_string + f"{i}.html")
-    soup = http_get_to_soup(get_string + f"{i}.html")
-    # get ids
-    ids = get_ids(soup)
-
-conn.close()
-
-def get_sizes(self, soup):
-    """
-
-    Get size of wg
-    (room, total)
-
-    :soup: BeautifulSoup object
-    :returns: TODO
-
-    """
-
+    # get sizes
     # basic facts
     basic = soup.find("div", id="basic_facts_wrapper")
     # room size
@@ -337,26 +362,12 @@ def get_sizes(self, soup):
     else:
         room_size = room_size_raw.replace("m²", "")
 
-    return {
+    details_d["sizes"] = {
         "size_all": size_all,
         "wg_type_all": wg_desc,
         "room_size": room_size
     }
 
-def get_costs(self, soup):
-    """
-
-    Get costs of wg
-    (miete, nebenkosten,
-    sonstiges, kaution, abstandszahlung)
-
-    :soup: BeautifulSoup object
-    :returns: TODO
-
-    """
-
-    # basic facts
-    basic = soup.find("div", id="basic_facts_wrapper")
     # costs
     graph_wrapper = basic.find("div", id="graph_wrapper")
     # rent; [1:] to remove first element
@@ -375,7 +386,8 @@ def get_costs(self, soup):
     abst = provision_eq[1].find("label").text.strip()
     abst = None if abst == "n.a." else abst.replace("€", "")
 
-    return {
+    # add to dict
+    details_d["costs"] = {
         "others": rent_list[0],
         "extra": rent_list[1],
         "rent": rent_list[2],
@@ -383,17 +395,6 @@ def get_costs(self, soup):
         "deposit": provision,
         "transfer_fee": abst
     }
-
-def get_angaben(self, soup):
-    """
-
-    Get angaben of wg
-    (house type, wifi, furniture, parking, ...)
-
-    :soup: BeautifulSoup object
-    :returns: dict
-
-    """
 
     # angaben zum objekt
     h3 = soup.find_all(
@@ -411,29 +412,26 @@ def get_angaben(self, soup):
         ]
         # (house type, wifi, furniture, parking, ...)
         # create dict of items
-        angaben_dict = dict([
+        angaben_d = dict([
             (x.span.attrs["class"][1].split("-", 1)[1],
              " ".join(x.text.replace("\n", "").strip().split())
              ) for x in a_filtered
         ])
     except IndexError:
-        angaben_dict = None
+        angaben_d = None
 
-    return angaben_dict
+    # rename keys
+    keys = list(angaben_d.keys())
+    for k in keys:
+        angaben_d[angaben_map[k]] = angaben_d.pop(k)
 
-def get_roommates(self, soup):
-    """
+    # check for "ökostrom"
+    if "ökostrom" in angaben_d:
+        angaben_d["ökostrom"] = True
 
-    Get roommates of wg
+    details_d["angaben"] = angaben_d
 
-    :soup: BeautifulSoup object
-    :returns: bytes
-
-    """
-
-    h3 = soup.find_all(
-        "h3", class_="headline headline-detailed-view-panel-title"
-    )
+    # roommates
     details = [
         x for x in h3 if x.text.strip() == "WG-Details"
     ][0].parent.parent
@@ -460,65 +458,21 @@ def get_roommates(self, soup):
 
         roommates_bytes = bytes([r_all] + r_comp)
 
-    return roommates_bytes
-
-def get_details(self, soup):
-    """
-
-    Get details of wg
-    (roommates, constellation, age, smoking, ...)
-
-    :soup: BeautifulSoup object
-    :returns: dict
-
-    """
-
-    # wg-details
-    h3 = soup.find_all(
-        "h3", class_="headline headline-detailed-view-panel-title"
-    )
-    details = [
-        x for x in h3 if x.text.strip() == "WG-Details"
-    ][0].parent.parent
-    d_list = [
-        " ".join(x.text.strip().replace("\n", "").split()) for x in
-              details.find_all("li")
-    ]
-    # "Bewohneralter" is optional; so insert None at given position
-    d_list = [(x if x != "" else None) for x in d_list]
-
     # "Rauchen" is optional so add None if not present
     if len(d_list) == 7:
         d_list.insert(4, None)
 
+    details_d["roommates_b"] = roommates_bytes
+    details_d["wg_size"] = d_list[0]
+    details_d["wohnung_size"] = d_list[1]
+    details_d["roommate_age"] = d_list[3]
+    details_d["smoking"] = d_list[4]
+    details_d["wg_type"] = d_list[5]
+    details_d["languages"] = d_list[6]
+    details_d["looking_for"] = d_list[7]
 
-    return  {
-        "wg_size": d_list[0],
-        "wohnung_size": d_list[1],
-        "roommate_age": d_list[3],
-        "smoking": d_list[4],
-        "wg_type": d_list[5],
-        "languages": d_list[6],
-        "looking_for": d_list[7]
-    }
-
-
-def get_availability( soup):
-    """
-
-    Get availability
-    (from, until, online since)
-
-    :soup: BeautifulSoup object
-    :returns: avlblty_dict
-
-    """
-
-    if self.check_wg_available(soup):
-        # availability
-        h3 = soup.find_all(
-            "h3", class_="headline headline-detailed-view-panel-title"
-        )
+    # available: "frei_ab", "frei_bis"
+    if details_d["available"]:
         avlblty_row = [
             x for x in h3 if x.text.strip() == "Verfügbarkeit"
         ][0].parent.parent
@@ -538,78 +492,73 @@ def get_availability( soup):
             avlblty_dict["frei_bis"] = None
         # since when is offer online?
         online_raw = soup.find_all("b", class_="noprint")
-        online_since = online_raw[0].text.strip().split(": ")[1]
-        # deduct time delta
-        if "Minute" in online_since:
-            # t = int(online_since.split(": ")[1].split(" Minute")[0])
-            t = int(online_since.split(" Minute")[0])
-            insert_datetime = datetime.now() - timedelta(minutes=t)
-        elif "Stunde" in online_since:
-            # t = int(online_since.split(": ")[1].split("Stunde")[0])
-            t = int(online_since.split(" Stunde")[0])
-            insert_datetime = datetime.now() - timedelta(hours=t)
-        elif "Tag" in online_since:
-            t = int(online_since.split(" Tag")[0])
-            insert_datetime = datetime.now() - timedelta(days=t)
-        else:
-            insert_datetime = datetime.strptime(online_since, "%d.%m.%Y")
-
-        avlblty_dict["insert_dt"] = insert_datetime
     else:
         # wg is opccupied
-        avlblty_dict = {
-            "frei_ab": None,
-            "frei_bis": None,
-            "insert_dt": None
-        }
+        avlblty_dict = None
 
-    return avlblty_dict
+    details_d["availability"] = avlblty_dict
 
-def check_wg_available(self, soup):
-    """
+    return details_d
 
-    checks for h4 element in html with keyword "deaktiviert"
+# read current counter
+with open(script_path + "/wg_counter") as f:
+    wg_counter = f.read()
+print("wg-gesucht momentan bei " + wg_counter)
 
-    :wg_url: url to wg advert (string)
+# get available pages
+soup = http_get_to_soup(get_string + "0.html")
+# find page_bar with numbers of pages
+page_bar = soup.find_all("ul", class_="pagination pagination-sm")[0]
+page_counter = int(page_bar.find_all("li")[-2].get_text().strip())
+print(f"There are {page_counter} pages available")
 
-    :returns: Bool if inserat is available
-    """
+# iterate lists of inserate
+for i in range(int(wg_counter), page_counter):
+    print(get_string + f"{i}.html")
+    soup = http_get_to_soup(get_string + f"{i}.html")
+    # get initial details from main listing
+    main_details = get_details_from_main(soup)
 
-    hfours = soup.find_all("h4", class_="headline alert-primary-headline")
-    check = [x for x in hfours if "deaktiviert" in x.text]
+    # check for new osm_ids
+    new_osms = [
+        x for x in main_details if x["address"]["osm_id"] not in osm_ids
+    ]
 
-    # 0 no alerts -> wg is available
-    # > 1 alters -> wg is unavailable
-    return len(check) == 0
+    # insert new osm_ids and their respective fc
+    for osm in new_osms:
+        cur.execute(insert_osm_ids,
+                    (str(osm["address"]["osm_id"]),
+                     Json(osm["address"]["fc"]),
+                     osm["address"]["city"],)
+                    )
 
-def parse_wgs(self, wg_url):
-    """
+    for d in main_details:
+        inserat_parsed = parse_wg(d)
+        print({k: v for k, v in inserat_parsed.items() if k != "img_raw"})
+        # TODO costs Namenabänderung
+        preped_l = [
+            inseart_parsed["id"],
+            inseart_parsed["address"]["viertel"],
+            inseart_parsed["title"],
+            inseart_parsed["costs"]["rent_all"],
+            inseart_parsed["costs"]["rent"],
+            inseart_parsed["costs"]["others"],
+            inseart_parsed["costs"]["extra"],
+            inseart_parsed["costs"]["deposit"],
+            inseart_parsed["costs"]["transfer_fee"],
+            inseart_parsed["check_available"],
+            inseart_parsed["availability"]["insert_dt"],
+            self.stadt,
+            inseart_parsed["availability"]["frei_ab"],
+            inseart_parsed["availability"]["frei_bis"],
+            Json(inseart_parsed["address"]),
+            Json(inseart_parsed["sizes"]),
+            inseart_parsed["roommates"],
+            self.wtype,
+            Json(inseart_parsed["angaben"]),
+            Json(inseart_parsed["details"])
 
-    Parse content of wg advert
-
-    :wg_url: url to wg advert (string)
-
-    :returns: combined dictionary with all info of inserat
-
-    """
-    inserat_id = self.get_id_of_url(wg_url)
-    soup = self.http_get_to_soup(wg_url)
-    if "https://www.wg-gesucht.de/cuba.html" in self.current_url:
-        return 1
-    else:
-        return {
-            "inserat_id": inserat_id,
-            "title": self.get_title(soup),
-            "address": self.get_address(soup),
-            "sizes": self.get_sizes(soup),
-            "costs": self.get_costs(soup),
-            "angaben": self.get_angaben(soup),
-            "details": self.get_details(soup),
-            "availability": self.get_availability(soup),
-            "check_available": self.check_wg_available(soup),
-            "wg_images": self.get_wg_images(soup),
-            "roommates": self.get_roommates(soup)
-        }
+conn.close()
 
 def insert_into_inserate(self, parsed_wg):
     """
