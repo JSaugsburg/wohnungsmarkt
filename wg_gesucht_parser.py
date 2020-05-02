@@ -33,6 +33,7 @@ city_codes = {
     "Munchen": "90"
 }
 
+# map icon-names to appropriate naming
 angaben_map = {
     "mixed-buildings": "haustyp",
     "building": "etage",
@@ -55,9 +56,8 @@ inserat_sql = """
     miete_gesamt, miete_kalt, miete_sonstige, nebenkosten,
     kaution, abstandszahlung, verfuegbar, city, frei_ab,
     frei_bis, groesse, mitbewohner, wohnungs_type, angaben,
-    details, online_seit, realtor, osm_id, strasse, hausnummer,
-    plz, neighbourhood) VALUES
-    (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s);
+    details, online_seit, realtor, adress_str) VALUES
+    (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s);
     """
 
 images_sql = """
@@ -69,15 +69,6 @@ inserat_ids_sql = """
     SELECT inserat_id FROM wg_gesucht.inserate
     WHERE city = %s
     AND wohnungs_type = %s;
-    """
-
-osm_ids_sql = """
-    SELECT osm_id FROM gis.osm;
-    """
-
-insert_osm_ids = """
-    INSERT INTO gis.osm (osm_id, fc, city)
-    VALUES (%s,%s,%s);
     """
 # read config
 config = configparser.ConfigParser()
@@ -154,118 +145,58 @@ def http_get_to_soup(url):
 def get_address(soup):
     """
 
-    Retrieve address of wg
+    Retrieve address string of advert
 
     :soup: BeautifulSoup object
-    :return: {
-        "city": ...,
-        "street": ...,
-        "house_number": ...,
-        "plz": ...,
-        "viertel": ...,
-        "neighbourhood": ...
+    :return: adress_str (string)
 
     """
     # get respective "div" element
     div_body = soup.find("div", class_="col-sm-8 card_body")
     div_text = soup.find("div", class_="col-xs-11").span.text
     # first item is wd detail so [1:]
-    address_list = [
+    address_l = [
         " ".join(x.strip().split()) for x in div_text.split("|")[1:]
     ]
-    # "/" durch " " ersetzen
-    if "/" in address_list[1]:
-        address_list[1] = address_list[1].replace("/", " ")
-    # replace "Nähe" -> only produces ambiguous results
-    if "nähe" in address_list[1].lower():
-        address_list[1] = address_list[1].lower().replace(
+    if "nähe" in address_l[1].lower():
+        address_l[1] = address_l[1].lower().replace(
             "nähe", ""
         ).strip()
-    # format params for url
-    params = address_list[0].split(" ")[0]+"+"+address_list[1].replace(" ", "+")
-    # query nominatim search with given address details
-    query_str = "https://nominatim.openstreetmap.org/search?" \
-        f"q={params}&format=geojson&addressdetails=1&limit=1"
-    r = http_get(query_str)
-    # nominatim fairness rules -> wait 3 secs
-    address_json = r.json()
-    # get feature of FeatureCollection
-    print(address_json["features"])
+    address_str = " ".join(address_l)
 
-    if len(address_json["features"]) == 0:
-        osm_id = None
-    else:
-        osm_id = address_json["features"][0]["properties"]["osm_id"]
+    assert len(address_l[0].split()) == 2
 
-    try:
-        feat = address_json["features"][0]
-
-        # Stadtbergen != Augsburg
-        if "city" in feat["properties"]["address"]:
-            city = feat["properties"]["address"]["city"]
-        elif "town" in feat["properties"]["address"]:
-            city = feat["properties"]["address"]["town"]
-        else:
-            city = None
-
-        # check if "house_number" availabe
-        if "house_number" in feat["properties"]["address"]:
-            house_number = feat["properties"]["address"]["house_number"]
-        else:
-            house_number = None
-
-        # check if "neighbourhood" available
-        if "neighbourhood" in feat["properties"]["address"]:
-            neighbourhood = feat["properties"]["address"]["neighbourhood"]
-        else:
-            neighbourhood = None
-
-        # check if "suburb" available
-        if "suburb" in feat["properties"]["address"]:
-            suburb = feat["properties"]["address"]["suburb"]
-        else:
-            suburb = None
-
-        return {
-            "city": city,
-            "street": feat["properties"]["address"]["road"],
-            "house_number": house_number,
-            "plz": feat["properties"]["address"]["postcode"],
-            "viertel": suburb,
-            "neighbourhood": neighbourhood,
-            "osm_id": osm_id,
-            "fc": address_json
-        }
-    # keine Features für Adresse verfügbar
-    except IndexError:
-        return None
+    return {
+        "address_str": address_str,
+        "viertel": address_l[0].split()[1]
+    }
 
 def get_insert_dt(soup):
     t_string = soup.find_all(
         "div", class_="col-sm-12 flex_space_between"
     )[-1].find_all("span")[-1].text
     # split at "online"
-    online_since = t_string.split("Online: ")[1]
+    online_since = t_string.split("online: ")[1]
     # since when is offer online?
-    if "Minute" in online_since:
-        t = int(online_since.split(" Minute")[0])
+    if "minute" in online_since:
+        t = int(online_since.split(" minute")[0])
         insert_datetime = datetime.now() - timedelta(minutes=t)
-    elif "Stunde" in online_since:
-        # t = int(online_since.split(": ")[1].split("Stunde")[0])
-        t = int(online_since.split(" Stunde")[0])
+    elif "stunde" in online_since:
+        # t = int(online_since.split(": ")[1].split("stunde")[0])
+        t = int(online_since.split(" stunde")[0])
         insert_datetime = datetime.now() - timedelta(hours=t)
-    elif "Tag" in online_since:
-        t = int(online_since.split(" Tag")[0])
+    elif "tag" in online_since:
+        t = int(online_since.split(" tag")[0])
         insert_datetime = datetime.now() - timedelta(days=t)
     else:
-        insert_datetime = datetime.strptime(online_since, "%d.%m.%Y")
+        insert_datetime = datetime.strptime(online_since, "%d.%m.%y")
 
     return insert_datetime
 
 def get_image(soup):
     img_url = soup.find("a").get("style").split("image: ")[1][4:-2]
     if "placeholder" in img_url:
-        img_raw = None
+        img_raw = none
     else:
         img_raw = http_get(img_url).content
 
@@ -279,18 +210,18 @@ def get_id(soup):
 
 def is_available(soup):
     if soup.find("span", class_="ribbon-deactivated"):
-        available = True
+        available = false
     else:
-        available = False
+        available = true
 
     return available
 
 def get_details_from_main(soup):
     """
 
-    Retrieve availabe ids of adverts from main page
-    Also generates info like realtor and ids
-    :soup: soup of main page withe inserate (BeautifulSoup object)
+    retrieve availabe ids of adverts from main page
+    also generates info like realtor and ids
+    :soup: soup of main page withe inserate (beautifulsoup object)
 
     :returns: list of ids to available wgs
 
@@ -299,13 +230,13 @@ def get_details_from_main(soup):
     wgs_list = soup.find_all("div", id=re.compile("^liste-details-ad"))
     # filter out "hidden" items
     wgs_list = [x for x in wgs_list if "hidden" not in x.get("id")]
-    # filter out "Übernachtung"
+    # filter out "übernachtung"
     wgs_list = [
-        x for x in wgs_list if not x.find("span", title="Übernachtung")
+        x for x in wgs_list if not x.find("span", title="übernachtung")
     ]
-    # filter out "Tauschangebot"
+    # filter out "tauschangebot"
     wgs_list = [
-        x for x in wgs_list if not x.find("span", title="Tauschangebot")
+        x for x in wgs_list if not x.find("span", title="tauschangebot")
     ]
     # get genral info of wg inserat from main page
     wg_items = [
@@ -388,12 +319,12 @@ def parse_wg(details_d):
 
     # add to dict
     details_d["costs"] = {
-        "others": rent_list[0],
-        "extra": rent_list[1],
-        "rent": rent_list[2],
-        "rent_all": rent_list[3],
-        "deposit": provision,
-        "transfer_fee": abst
+        "miete_sonstige": rent_list[0],
+        "nebenkosten": rent_list[1],
+        "miete_kalt": rent_list[2],
+        "miete_gesamt": rent_list[3],
+        "kaution": provision,
+        "abstandszahlung": abst
     }
 
     # angaben zum objekt
@@ -463,13 +394,15 @@ def parse_wg(details_d):
         d_list.insert(4, None)
 
     details_d["roommates_b"] = roommates_bytes
-    details_d["wg_size"] = d_list[0]
-    details_d["wohnung_size"] = d_list[1]
-    details_d["roommate_age"] = d_list[3]
-    details_d["smoking"] = d_list[4]
-    details_d["wg_type"] = d_list[5]
-    details_d["languages"] = d_list[6]
-    details_d["looking_for"] = d_list[7]
+    details_d["details"] = {
+        "wg_size": d_list[0],
+        "wohnung_size": d_list[1],
+        "roommate_age": d_list[3],
+        "smoking": d_list[4],
+        "wg_type": d_list[5],
+        "languages": d_list[6],
+        "looking_for": d_list[7]
+    }
 
     # available: "frei_ab", "frei_bis"
     if details_d["available"]:
@@ -519,96 +452,46 @@ for i in range(int(wg_counter), page_counter):
     # get initial details from main listing
     main_details = get_details_from_main(soup)
 
-    # check for new osm_ids
-    new_osms = [
-        x for x in main_details if x["address"]["osm_id"] not in osm_ids
+    # filter out already parsed wgs
+    main_details = [
+        x["id"] for x in main_details if x["id"] not in inserat_ids
     ]
-
-    # insert new osm_ids and their respective fc
-    for osm in new_osms:
-        cur.execute(insert_osm_ids,
-                    (str(osm["address"]["osm_id"]),
-                     Json(osm["address"]["fc"]),
-                     osm["address"]["city"],)
-                    )
 
     for d in main_details:
         inserat_parsed = parse_wg(d)
         print({k: v for k, v in inserat_parsed.items() if k != "img_raw"})
-        # TODO costs Namenabänderung
         preped_l = [
-            inseart_parsed["id"],
-            inseart_parsed["address"]["viertel"],
-            inseart_parsed["title"],
-            inseart_parsed["costs"]["rent_all"],
-            inseart_parsed["costs"]["rent"],
-            inseart_parsed["costs"]["others"],
-            inseart_parsed["costs"]["extra"],
-            inseart_parsed["costs"]["deposit"],
-            inseart_parsed["costs"]["transfer_fee"],
-            inseart_parsed["check_available"],
-            inseart_parsed["availability"]["insert_dt"],
-            self.stadt,
-            inseart_parsed["availability"]["frei_ab"],
-            inseart_parsed["availability"]["frei_bis"],
-            Json(inseart_parsed["address"]),
-            Json(inseart_parsed["sizes"]),
-            inseart_parsed["roommates"],
-            self.wtype,
-            Json(inseart_parsed["angaben"]),
-            Json(inseart_parsed["details"])
+            inserat_parsed["id"],
+            inserat_parsed["address"]["viertel"],
+            inserat_parsed["title"],
+            inserat_parsed["costs"]["miete_gesamt"],
+            inserat_parsed["costs"]["miete_kalt"],
+            inserat_parsed["costs"]["miete_sonstige"],
+            inserat_parsed["costs"]["nebenkosten"],
+            inserat_parsed["costs"]["kaution"],
+            inserat_parsed["costs"]["abstandszahlung"],
+            inserat_parsed["available"],
+            city,
+            inserat_parsed["availability"]["frei_ab"],
+            inserat_parsed["availability"]["frei_bis"],
+            Json(inserat_parsed["sizes"]),
+            inserat_parsed["roommates_b"],
+            wtype,
+            Json(inserat_parsed["angaben"]),
+            Json(inserat_parsed["details"]),
+            inserat_parsed["insert_dt"],
+            inserat_parsed["realtor"],
+            inserat_parsed["address"]["address_str"]
+        ]
 
+        cur.execute(inserat_sql, preped_l)
+        cur.execute(images_sql,
+                    [inserat_parsed["id"], inserat_parsed["img_raw"]]
+                    )
+
+    with open(script_path + "/wg_counter", "w") as f:
+        f.write(str(i))
+
+cur.close()
 conn.close()
 
-def insert_into_inserate(self, parsed_wg):
-    """
-
-    Inserts parsed wg page into DB
-    Used in conjunction with self.parse_wg
-
-    :parsed_wg: items to fill into wg_gesucht.inserate (dict)
-
-    """
-    preped_l = [
-        parsed_wg["inserat_id"],
-        parsed_wg["address"]["viertel"] + "_" + self.stadt,
-        parsed_wg["title"],
-        parsed_wg["costs"]["rent_all"],
-        parsed_wg["costs"]["rent"],
-        parsed_wg["costs"]["others"],
-        parsed_wg["costs"]["extra"],
-        parsed_wg["costs"]["deposit"],
-        parsed_wg["costs"]["transfer_fee"],
-        parsed_wg["check_available"],
-        parsed_wg["availability"]["insert_dt"],
-        self.stadt,
-        parsed_wg["availability"]["frei_ab"],
-        parsed_wg["availability"]["frei_bis"],
-        Json(parsed_wg["address"]),
-        Json(parsed_wg["sizes"]),
-        parsed_wg["roommates"],
-        self.wtype,
-        Json(parsed_wg["angaben"]),
-        Json(parsed_wg["details"])
-    ]
-    self.execute_sql(self.cur,
-                     self.inserat_sql,
-                     preped_l)
-
-    self.insert_into_images(
-        parsed_wg["inserat_id"], parsed_wg["wg_images"]
-    )
-
-def insert_into_images(self, inserat_id, images_bytes):
-    """
-
-    Inserts bytes of image into DB
-    Used in conjunction with self.get_wg_images
-
-    :inserat_id: uid of inserat
-    :images_bytes: bytes of image to fill into wg_gesucht.images_inserate
-
-    """
-    self.execute_sql(self.cur,
-                     self.images_sql,
-                     [inserat_id, images_bytes])
