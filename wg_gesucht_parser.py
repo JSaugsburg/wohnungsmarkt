@@ -46,7 +46,9 @@ angaben_map = {
     "folder-closed": "sonstiges",
     "display": "tv",
     "leaf": "ökostrom",
-    "fire": "heizung"
+    "fire": "heizung",
+    "group": "wg_geeignet",
+    "person-wheelchair": "barrierefrei"
 }
 
 get_string = f"{url}{wtype_d[wtype]}-in-{city}.{city_codes[city]}.{wtype}.1."
@@ -89,12 +91,6 @@ cur.execute(inserat_ids_sql, (city, wtype,))
 rows = cur.fetchall()
 inserat_ids = [x[0] for x in rows] if len(rows) > 0 else []
 print(f"Bisher {len(inserat_ids)} inserate für {city} und {wtype_d[wtype]}")
-
-# get stored osm_ids
-cur.execute(osm_ids_sql)
-rows = cur.fetchall()
-osm_ids = [int(x[0]) for x in rows] if len(rows) > 0 else []
-print(f"Bisher {len(osm_ids)} osm_ids")
 
 # login to wg-gesucht
 session = requests.Session()
@@ -162,6 +158,12 @@ def get_address(soup):
         address_l[1] = address_l[1].lower().replace(
             "nähe", ""
         ).strip()
+
+    if "nähe" in address_l[0].lower():
+        address_l[0] = address_l[0].lower().replace(
+            "nähe", ""
+        ).strip().title()
+
     address_str = " ".join(address_l)
 
     assert len(address_l[0].split()) == 2
@@ -174,7 +176,7 @@ def get_address(soup):
 def get_insert_dt(soup):
     t_string = soup.find_all(
         "div", class_="col-sm-12 flex_space_between"
-    )[-1].find_all("span")[-1].text
+    )[-1].find_all("span")[-1].text.lower()
     # split at "online"
     online_since = t_string.split("online: ")[1]
     # since when is offer online?
@@ -196,7 +198,7 @@ def get_insert_dt(soup):
 def get_image(soup):
     img_url = soup.find("a").get("style").split("image: ")[1][4:-2]
     if "placeholder" in img_url:
-        img_raw = none
+        img_raw = None
     else:
         img_raw = http_get(img_url).content
 
@@ -210,9 +212,9 @@ def get_id(soup):
 
 def is_available(soup):
     if soup.find("span", class_="ribbon-deactivated"):
-        available = false
+        available = False
     else:
-        available = true
+        available = True
 
     return available
 
@@ -454,10 +456,12 @@ for i in range(int(wg_counter), page_counter):
 
     # filter out already parsed wgs
     main_details = [
-        x["id"] for x in main_details if x["id"] not in inserat_ids
+        x for x in main_details if int(x["id"]) not in inserat_ids
     ]
 
+    print("parsing WGS")
     for d in main_details:
+        print("parsing WG " + d["url"])
         inserat_parsed = parse_wg(d)
         print({k: v for k, v in inserat_parsed.items() if k != "img_raw"})
         preped_l = [
