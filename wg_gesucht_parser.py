@@ -85,7 +85,8 @@ viertel_map = {
     "stadtbergen": None,
     "biburg": None,
     "bergen": None,
-    "pöttmes": None
+    "pöttmes": None,
+    "zusmarshausen": None
 }
 
 get_string = f"{url}{wtype_d[wtype]}-in-{city}.{city_codes[city]}.{wtype}.1."
@@ -224,6 +225,8 @@ def get_address(soup):
         address_city = "Affing"
     elif viertel == "pöttmes":
         address_city = "Pöttmes"
+    elif viertel == "zusmarshausen":
+        address_city = "Zusmarshausen"
     else:
         address_city = city
 
