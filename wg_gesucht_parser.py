@@ -79,6 +79,7 @@ viertel_map = {
     "jakobervorstadt": "Innenstadt_Augsburg",
     "bismarckviertel": "Innenstadt_Augsburg",
     "mitte": "Innenstadt_Augsburg",
+    "georgsviertel": "Innenstadt_Augsburg",
     "augsburg": None,
     "königsbrunn": None,
     "stadtbergen": None,
