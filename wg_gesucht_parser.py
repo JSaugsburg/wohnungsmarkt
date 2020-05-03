@@ -74,7 +74,7 @@ viertel_map = {
     "Oberhausen": "Oberhausen_Augsburg",
     "zentrum": "Innenstadt_Augsburg",
     "Textilviertel": "Spickel-Herrenbach_Augsburg",
-    "Jakobervorstadt": "Jakobervorstadt_Augsburg",
+    "Jakobervorstadt": "Innenstadt_Augsburg",
     "Augsburg": None,
     "Königsbrunn": None
 }
