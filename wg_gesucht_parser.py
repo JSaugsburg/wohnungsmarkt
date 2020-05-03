@@ -53,30 +53,37 @@ angaben_map = {
 
 # viertel mapper
 viertel_map = {
-    "Uni": "Universitätsviertel_Augsburg",
-    "Pfersee": "Pfersee_Augsburg",
-    "Antonsviertel": "Antonsviertel_Augsburg",
-    "Inningen": "Inningen_Augsburg",
-    "Spickel-Herrenbach": "Spickel-Herrenbach_Augsburg",
-    "Hochfeld": "Hochfeld_Augsburg",
-    "Bergheim": "Bergheim_Augsburg",
-    "Innenstadt": "Innenstadt_Augsburg",
-    "Haunstetten-Siebenbrunn": "Haunstetten-Siebenbrunn_Augsburg",
-    "Haunstetten": "Haunstetten-Siebenbrunn_Augsburg",
-    "Göggingen": "Göggingen_Augsburg",
-    "Hochzoll": "Hochzoll_Augsburg",
-    "Firnhaberau": "Firnhaberau_Augsburg",
-    "Universitätsviertel": "Universitätsviertel_Augsburg",
-    "Hammerschmiede": "Hammerschmiede_Augsburg",
-    "Kriegshaber": "Kriegshaber_Augsburg",
-    "Bärenkeller": "Bärenkeller_Augsburg",
-    "Lechhausen": "Lechhausen_Augsburg",
-    "Oberhausen": "Oberhausen_Augsburg",
+    "uni": "Universitätsviertel_Augsburg",
+    "pfersee": "Pfersee_Augsburg",
+    "antonsviertel": "Antonsviertel_Augsburg",
+    "inningen": "Inningen_Augsburg",
+    "spickel-herrenbach": "Spickel-Herrenbach_Augsburg",
+    "spickel": "Spickel-Herrenbach_Augsburg",
+    "herrenbach": "Spickel-Herrenbach_Augsburg",
+    "hochfeld": "Hochfeld_Augsburg",
+    "bergheim": "Bergheim_Augsburg",
+    "innenstadt": "Innenstadt_Augsburg",
+    "haunstetten-siebenbrunn": "Haunstetten-Siebenbrunn_Augsburg",
+    "haunstetten": "Haunstetten-Siebenbrunn_Augsburg",
+    "göggingen": "Göggingen_Augsburg",
+    "hochzoll": "Hochzoll_Augsburg",
+    "firnhaberau": "Firnhaberau_Augsburg",
+    "universitätsviertel": "Universitätsviertel_Augsburg",
+    "hammerschmiede": "Hammerschmiede_Augsburg",
+    "kriegshaber": "Kriegshaber_Augsburg",
+    "bärenkeller": "Bärenkeller_Augsburg",
+    "lechhausen": "Lechhausen_Augsburg",
+    "oberhausen": "Oberhausen_Augsburg",
     "zentrum": "Innenstadt_Augsburg",
-    "Textilviertel": "Spickel-Herrenbach_Augsburg",
-    "Jakobervorstadt": "Innenstadt_Augsburg",
-    "Augsburg": None,
-    "Königsbrunn": None
+    "textilviertel": "Spickel-Herrenbach_Augsburg",
+    "jakobervorstadt": "Innenstadt_Augsburg",
+    "bismarckviertel": "Innenstadt_Augsburg",
+    "mitte": "Innenstadt_Augsburg",
+    "augsburg": None,
+    "königsbrunn": None,
+    "stadtbergen": None,
+    "biburg": None,
+    "bergen": None
 }
 
 get_string = f"{url}{wtype_d[wtype]}-in-{city}.{city_codes[city]}.{wtype}.1."
@@ -97,8 +104,7 @@ images_sql = """
 
 inserat_ids_sql = """
     SELECT inserat_id FROM wg_gesucht.inserate
-    WHERE city = %s
-    AND wohnungs_type = %s;
+    WHERE wohnungs_type = %s;
     """
 # read config
 config = configparser.ConfigParser()
@@ -115,7 +121,7 @@ conn.autocommit = True
 cur = conn.cursor()
 
 # get stored inserat_ids
-cur.execute(inserat_ids_sql, (city, wtype,))
+cur.execute(inserat_ids_sql, (wtype,))
 rows = cur.fetchall()
 inserat_ids = [x[0] for x in rows] if len(rows) > 0 else []
 print(f"Bisher {len(inserat_ids)} inserate für {city} und {wtype_d[wtype]}")
@@ -185,26 +191,35 @@ def get_address(soup):
     if "nähe" in address_l[1].lower():
         address_l[1] = address_l[1].lower().replace(
             "nähe", ""
-        ).strip()
+        ).strip().title()
 
     if "nähe" in address_l[0].lower():
         address_l[0] = address_l[0].lower().replace(
             "nähe", ""
         ).strip().title()
 
-    if "/" in address_l[0]:
+    if "umgebung" in address_l[0].lower():
         address_l[0] = address_l[0].lower().replace(
-            "nähe", ""
+            "umgebung", ""
         ).strip().title()
+
+    if "/" in address_l[0]:
+        address_l[0] = address_l[0].split("/")[0].strip()
 
     assert len(address_l[0].split()) == 2
 
     address_str = " ".join(address_l)
-    viertel = address_l[0].split()[1]
+    viertel = address_l[0].split()[1].lower()
 
     # königsbrunn und Stadtbergen liegen NICHT in Augsburg
-    if viertel == "Königsbrunn":
+    if viertel == "königsbrunn":
         address_city = "Königsbrunn"
+    elif viertel == "stadtbergen":
+        address_city = "Stadtbergen"
+    elif viertel == "biburg":
+        address_city = "Diedorf"
+    elif viertel == "bergen":
+        address_city = "Affing"
     else:
         address_city = city
 
@@ -250,7 +265,7 @@ def get_image(soup):
 
 def get_id(soup):
     inserat_id = soup.get("id").split("-")[-1]
-    print(inserat_id)
+    print(url + inserat_id + ".html")
 
     return inserat_id
 
@@ -284,6 +299,9 @@ def get_details_from_main(soup):
     wgs_list = [
         x for x in wgs_list if not x.find("span", title="tauschangebot")
     ]
+    # filter out already parsed wgs
+    wgs_list = [x for x in wgs_list if int(get_id(x)) not in inserat_ids]
+
     # get genral info of wg inserat from main page
     wg_items = [
         {
