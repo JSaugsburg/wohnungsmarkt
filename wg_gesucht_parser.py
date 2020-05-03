@@ -51,6 +51,34 @@ angaben_map = {
     "person-wheelchair": "barrierefrei"
 }
 
+# viertel mapper
+viertel_map = {
+    "Uni": "Universitätsviertel_Augsburg",
+    "Pfersee": "Pfersee_Augsburg",
+    "Antonsviertel": "Antonsviertel_Augsburg",
+    "Inningen": "Inningen_Augsburg",
+    "Spickel-Herrenbach": "Spickel-Herrenbach_Augsburg",
+    "Hochfeld": "Hochfeld_Augsburg",
+    "Bergheim": "Bergheim_Augsburg",
+    "Innenstadt": "Innenstadt_Augsburg",
+    "Haunstetten-Siebenbrunn": "Haunstetten-Siebenbrunn_Augsburg",
+    "Haunstetten": "Haunstetten-Siebenbrunn_Augsburg",
+    "Göggingen": "Göggingen_Augsburg",
+    "Hochzoll": "Hochzoll_Augsburg",
+    "Firnhaberau": "Firnhaberau_Augsburg",
+    "Universitätsviertel": "Universitätsviertel_Augsburg",
+    "Hammerschmiede": "Hammerschmiede_Augsburg",
+    "Kriegshaber": "Kriegshaber_Augsburg",
+    "Bärenkeller": "Bärenkeller_Augsburg",
+    "Lechhausen": "Lechhausen_Augsburg",
+    "Oberhausen": "Oberhausen_Augsburg",
+    "zentrum": "Innenstadt_Augsburg",
+    "Textilviertel": "Spickel-Herrenbach_Augsburg",
+    "Jakobervorstadt": "Jakobervorstadt_Augsburg",
+    "Augsburg": None,
+    "Königsbrunn": None
+}
+
 get_string = f"{url}{wtype_d[wtype]}-in-{city}.{city_codes[city]}.{wtype}.1."
 
 inserat_sql = """
@@ -164,13 +192,29 @@ def get_address(soup):
             "nähe", ""
         ).strip().title()
 
-    address_str = " ".join(address_l)
+    if "/" in address_l[0]:
+        address_l[0] = address_l[0].lower().replace(
+            "nähe", ""
+        ).strip().title()
 
     assert len(address_l[0].split()) == 2
 
+    address_str = " ".join(address_l)
+    viertel = address_l[0].split()[1]
+
+    # königsbrunn und Stadtbergen liegen NICHT in Augsburg
+    if viertel == "Königsbrunn":
+        address_city = "Königsbrunn"
+    else:
+        address_city = city
+
+    # map the suburb name
+    viertel_mapped = viertel_map[viertel]
+
     return {
         "address_str": address_str,
-        "viertel": address_l[0].split()[1]
+        "viertel": viertel_mapped,
+        "city": address_city
     }
 
 def get_insert_dt(soup):
@@ -191,7 +235,7 @@ def get_insert_dt(soup):
         t = int(online_since.split(" tag")[0])
         insert_datetime = datetime.now() - timedelta(days=t)
     else:
-        insert_datetime = datetime.strptime(online_since, "%d.%m.%y")
+        insert_datetime = datetime.strptime(online_since, "%d.%m.%Y")
 
     return insert_datetime
 
@@ -475,7 +519,7 @@ for i in range(int(wg_counter), page_counter):
             inserat_parsed["costs"]["kaution"],
             inserat_parsed["costs"]["abstandszahlung"],
             inserat_parsed["available"],
-            city,
+            inserat_parsed["address"]["city"],
             inserat_parsed["availability"]["frei_ab"],
             inserat_parsed["availability"]["frei_bis"],
             Json(inserat_parsed["sizes"]),
