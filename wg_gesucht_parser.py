@@ -221,6 +221,8 @@ def get_address(soup):
         address_city = "Diedorf"
     elif viertel == "bergen":
         address_city = "Affing"
+    elif viertel == "pöttmes":
+        address_city = "Pöttmes"
     else:
         address_city = city
 
