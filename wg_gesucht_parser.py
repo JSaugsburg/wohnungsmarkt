@@ -84,7 +84,8 @@ viertel_map = {
     "königsbrunn": None,
     "stadtbergen": None,
     "biburg": None,
-    "bergen": None
+    "bergen": None,
+    "pöttmes": None
 }
 
 get_string = f"{url}{wtype_d[wtype]}-in-{city}.{city_codes[city]}.{wtype}.1."
