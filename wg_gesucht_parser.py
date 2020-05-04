@@ -89,6 +89,7 @@ viertel_map = {
     "am schäfflerbach": "Innenstadt_Augsburg",
     "domviertel": "Innenstadt_Augsburg",
     "theaterviertel": "Innenstadt_Augsburg",
+    "stadtjägerviertel": "Innenstadt_Augsburg",
     "jakobervorstadt süd": "Innenstadt_Augsburg",
     "jakobervorstadt nord": "Innenstadt_Augsburg",
     "augsburg": None,
