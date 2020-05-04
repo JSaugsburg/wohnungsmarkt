@@ -100,6 +100,7 @@ viertel_map = {
     "bleich und pfärrle": "Innenstadt_Augsburg",
     "beethovenviertel": "Innenstadt_Augsburg",
     "augsburg": None,
+    "bayern - augsburg": None,
     "königsbrunn": None,
     "stadtbergen": None,
     "biburg": None,
