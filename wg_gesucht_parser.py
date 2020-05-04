@@ -85,6 +85,7 @@ viertel_map = {
     "bismarckviertel": "Innenstadt_Augsburg",
     "mitte": "Innenstadt_Augsburg",
     "georgsviertel": "Innenstadt_Augsburg",
+    "georgs- und kreuzviertel": "Innenstadt_Augsburg",
     "am schäfflerbach": "Innenstadt_Augsburg",
     "domviertel": "Innenstadt_Augsburg",
     "theaterviertel": "Innenstadt_Augsburg",
