@@ -81,6 +81,8 @@ viertel_map = {
     "bismarckviertel": "Innenstadt_Augsburg",
     "mitte": "Innenstadt_Augsburg",
     "georgsviertel": "Innenstadt_Augsburg",
+    "am schäfflerbach": "Innenstadt_Augsburg",
+    "domviertel": "Innenstadt_Augsburg",
     "augsburg": None,
     "königsbrunn": None,
     "stadtbergen": None,
@@ -88,7 +90,8 @@ viertel_map = {
     "bergen": None,
     "pöttmes": None,
     "zusmarshausen": None,
-    "aystetten": None
+    "aystetten": None,
+    "neusäß": None
 }
 
 get_string = f"{url}{wtype_d[wtype]}-in-{city}.{city_codes[city]}.{wtype}.1."
@@ -211,10 +214,11 @@ def get_address(soup):
     if "/" in address_l[0]:
         address_l[0] = address_l[0].split("/")[0].strip()
 
-    assert len(address_l[0].split()) == 2
+    # manchmal schreiben User die PLZ mit. Hier entfernen
+    address_l[0] = "".join([x for x in address_l[0] if not x.isdigit()])
 
     address_str = " ".join(address_l)
-    viertel = address_l[0].split()[1].lower()
+    viertel = " ".join(address_l[0].split()[1:]).lower()
 
     # königsbrunn und Stadtbergen liegen NICHT in Augsburg
     if viertel == "königsbrunn":
@@ -231,6 +235,8 @@ def get_address(soup):
         address_city = "Zusmarshausen"
     elif viertel == "aystetten":
         address_city = "Aystetten"
+    elif viertel == "neusäß":
+        address_city = "Neusäß"
     else:
         address_city = city
 
@@ -502,7 +508,10 @@ def parse_wg(details_d):
         online_raw = soup.find_all("b", class_="noprint")
     else:
         # wg is opccupied
-        avlblty_dict = None
+        avlblty_dict = {
+            "frei_ab": None,
+            "frei_bis": None
+        }
 
     details_d["availability"] = avlblty_dict
 
