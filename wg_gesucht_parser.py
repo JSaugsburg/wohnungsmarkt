@@ -91,7 +91,8 @@ viertel_map = {
     "pöttmes": None,
     "zusmarshausen": None,
     "aystetten": None,
-    "neusäß": None
+    "neusäß": None,
+    "": None
 }
 
 get_string = f"{url}{wtype_d[wtype]}-in-{city}.{city_codes[city]}.{wtype}.1."
