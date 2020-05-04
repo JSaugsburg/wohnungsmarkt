@@ -108,6 +108,7 @@ viertel_map = {
     "neusäß": None,
     "steppach": None,
     "gersthofen": None,
+    "deutschland": None,
     "": None
 }
 
