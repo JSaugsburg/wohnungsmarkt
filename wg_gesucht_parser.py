@@ -75,6 +75,8 @@ viertel_map = {
     "bärenkeller": "Bärenkeller_Augsburg",
     "lechhausen": "Lechhausen_Augsburg",
     "oberhausen": "Oberhausen_Augsburg",
+    "rechts der wertach": "Oberhausen_Augsburg",
+    "links der wertach": "Oberhausen_Augsburg",
     "zentrum": "Innenstadt_Augsburg",
     "textilviertel": "Spickel-Herrenbach_Augsburg",
     "jakobervorstadt": "Innenstadt_Augsburg",
