@@ -93,6 +93,8 @@ viertel_map = {
     "stadtjäger": "Innenstadt_Augsburg",
     "jakobervorstadt süd": "Innenstadt_Augsburg",
     "jakobervorstadt nord": "Innenstadt_Augsburg",
+    "bleiche und pfärrle": "Innenstadt_Augsburg",
+    "bleich und pfärrle": "Innenstadt_Augsburg",
     "augsburg": None,
     "königsbrunn": None,
     "stadtbergen": None,
