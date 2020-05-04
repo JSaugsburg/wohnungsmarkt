@@ -67,6 +67,8 @@ viertel_map = {
     "bergheim": "Bergheim_Augsburg",
     "innenstadt": "Innenstadt_Augsburg",
     "haunstetten-siebenbrunn": "Haunstetten-Siebenbrunn_Augsburg",
+    "haunstetten nord": "Haunstetten-Siebenbrunn_Augsburg",
+    "haunstetten süd": "Haunstetten-Siebenbrunn_Augsburg",
     "haunstetten": "Haunstetten-Siebenbrunn_Augsburg",
     "göggingen": "Göggingen_Augsburg",
     "hochzoll": "Hochzoll_Augsburg",
