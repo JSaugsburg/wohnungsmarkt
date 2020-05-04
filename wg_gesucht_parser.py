@@ -54,6 +54,7 @@ angaben_map = {
 # viertel mapper
 viertel_map = {
     "uni": "Universitätsviertel_Augsburg",
+    "uni-": "Universitätsviertel_Augsburg",
     "pfersee": "Pfersee_Augsburg",
     "antonsviertel": "Antonsviertel_Augsburg",
     "inningen": "Inningen_Augsburg",
@@ -81,11 +82,14 @@ viertel_map = {
     "textilviertel": "Spickel-Herrenbach_Augsburg",
     "jakobervorstadt": "Innenstadt_Augsburg",
     "bismarckviertel": "Innenstadt_Augsburg",
+    "bismarckviertel": "Innenstadt_Augsburg",
     "mitte": "Innenstadt_Augsburg",
     "georgsviertel": "Innenstadt_Augsburg",
     "am schäfflerbach": "Innenstadt_Augsburg",
     "domviertel": "Innenstadt_Augsburg",
     "theaterviertel": "Innenstadt_Augsburg",
+    "jakobervorstadt süd": "Innenstadt_Augsburg",
+    "jakobervorstadt nord": "Innenstadt_Augsburg",
     "augsburg": None,
     "königsbrunn": None,
     "stadtbergen": None,
@@ -96,6 +100,7 @@ viertel_map = {
     "aystetten": None,
     "neusäß": None,
     "steppach": None,
+    "gersthofen": None,
     "": None
 }
 
@@ -244,6 +249,8 @@ def get_address(soup):
         address_city = "Neusäß"
     elif viertel == "steppach":
         address_city = "Neusäß"
+    elif viertel == "gersthofen":
+        address_city = "Gersthofen"
     else:
         address_city = city
 
