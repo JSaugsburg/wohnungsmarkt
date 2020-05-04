@@ -63,6 +63,7 @@ viertel_map = {
     "spickel": "Spickel-Herrenbach_Augsburg",
     "herrenbach": "Spickel-Herrenbach_Augsburg",
     "hochfeld": "Hochfeld_Augsburg",
+    "prinz karl viertel": "Hochfeld_Augsburg",
     "bergheim": "Bergheim_Augsburg",
     "innenstadt": "Innenstadt_Augsburg",
     "haunstetten-siebenbrunn": "Haunstetten-Siebenbrunn_Augsburg",
