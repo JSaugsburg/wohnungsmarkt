@@ -83,6 +83,7 @@ viertel_map = {
     "georgsviertel": "Innenstadt_Augsburg",
     "am schäfflerbach": "Innenstadt_Augsburg",
     "domviertel": "Innenstadt_Augsburg",
+    "theaterviertel": "Innenstadt_Augsburg",
     "augsburg": None,
     "königsbrunn": None,
     "stadtbergen": None,
