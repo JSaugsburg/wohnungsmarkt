@@ -92,6 +92,7 @@ viertel_map = {
     "zusmarshausen": None,
     "aystetten": None,
     "neusäß": None,
+    "steppach": None,
     "": None
 }
 
@@ -237,6 +238,8 @@ def get_address(soup):
     elif viertel == "aystetten":
         address_city = "Aystetten"
     elif viertel == "neusäß":
+        address_city = "Neusäß"
+    elif viertel == "steppach":
         address_city = "Neusäß"
     else:
         address_city = city
