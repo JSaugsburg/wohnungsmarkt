@@ -58,6 +58,7 @@ viertel_map = {
     "antonsviertel": "Antonsviertel_Augsburg",
     "inningen": "Inningen_Augsburg",
     "spickel-herrenbach": "Spickel-Herrenbach_Augsburg",
+    "wolframviertel": "Spickel-Herrenbach_Augsburg",
     "spickel": "Spickel-Herrenbach_Augsburg",
     "herrenbach": "Spickel-Herrenbach_Augsburg",
     "hochfeld": "Hochfeld_Augsburg",
