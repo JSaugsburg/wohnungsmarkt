@@ -86,7 +86,8 @@ viertel_map = {
     "biburg": None,
     "bergen": None,
     "pöttmes": None,
-    "zusmarshausen": None
+    "zusmarshausen": None,
+    "aystetten": None
 }
 
 get_string = f"{url}{wtype_d[wtype]}-in-{city}.{city_codes[city]}.{wtype}.1."
@@ -227,6 +228,8 @@ def get_address(soup):
         address_city = "Pöttmes"
     elif viertel == "zusmarshausen":
         address_city = "Zusmarshausen"
+    elif viertel == "aystetten":
+        address_city = "Aystetten"
     else:
         address_city = city
 
@@ -423,13 +426,13 @@ def parse_wg(details_d):
         angaben_d = None
 
     # rename keys
-    keys = list(angaben_d.keys())
-    for k in keys:
-        angaben_d[angaben_map[k]] = angaben_d.pop(k)
-
-    # check for "ökostrom"
-    if "ökostrom" in angaben_d:
-        angaben_d["ökostrom"] = True
+    if angaben_d:
+        keys = list(angaben_d.keys())
+        for k in keys:
+            angaben_d[angaben_map[k]] = angaben_d.pop(k)
+        # check for "ökostrom"
+        if "ökostrom" in angaben_d:
+            angaben_d["ökostrom"] = True
 
     details_d["angaben"] = angaben_d
 
