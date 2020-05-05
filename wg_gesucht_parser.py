@@ -102,6 +102,7 @@ viertel_map = {
     "jakobervorstadt nord": "Innenstadt_Augsburg",
     "bleiche und pfärrle": "Innenstadt_Augsburg",
     "bleich und pfärrle": "Innenstadt_Augsburg",
+    "bleicherviertel": "Innenstadt_Augsburg",
     "beethovenviertel": "Innenstadt_Augsburg",
     "heilig-kreuz-viertel": "Innenstadt_Augsburg",
     "augsburg": None,
