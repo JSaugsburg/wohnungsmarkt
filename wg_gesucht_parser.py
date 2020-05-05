@@ -80,8 +80,6 @@ viertel_map = {
     "universitätsviertel": "Universitätsviertel_Augsburg",
     "hammerschmiede": "Hammerschmiede_Augsburg",
     "kriegshaber": "Kriegshaber_Augsburg",
-    "kriegshaber cityrand": "Kriegshaber_Augsburg",
-    "augsburg cityrand": "Kriegshaber_Augsburg",
     "bärenkeller": "Bärenkeller_Augsburg",
     "lechhausen": "Lechhausen_Augsburg",
     "kleesiedlung": "Lechhausen_Augsburg",
@@ -97,8 +95,6 @@ viertel_map = {
     "zentrum": "Innenstadt_Augsburg",
     "zentral minuten vom the...": "Innenstadt_Augsburg",
     "textilviertel": "Spickel-Herrenbach_Augsburg",
-    "textielviertel": "Spickel-Herrenbach_Augsburg",
-    "textil viertel city-galerie": "Spickel-Herrenbach_Augsburg",
     "jakobervorstadt": "Innenstadt_Augsburg",
     "bismarckviertel": "Innenstadt_Augsburg",
     "bismarkviertel": "Innenstadt_Augsburg",
@@ -129,6 +125,7 @@ viertel_map = {
     "bergen": None,
     "pöttmes": None,
     "kutzenhausen": None,
+    "musikerviertel": None,
     "zusmarshausen": None,
     "aystetten": None,
     "neusäß": None,
@@ -141,7 +138,6 @@ viertel_map = {
     "friedberg west": None,
     "friedberg süd": None,
     "friedberg": None,
-    "deutschland": None,
     "": None
 }
 
