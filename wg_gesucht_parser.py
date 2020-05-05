@@ -119,6 +119,7 @@ viertel_map = {
     "beethovenviertel": "Innenstadt_Augsburg",
     "heilig-kreuz-viertel": "Innenstadt_Augsburg",
     "hauptbahnhof": "Innenstadt_Augsburg",
+    "altstadt": "Innenstadt_Augsburg",
     "augsburg": None,
     "bayern - augsburg": None,
     "königsbrunn": None,
