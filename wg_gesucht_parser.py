@@ -75,6 +75,7 @@ viertel_map = {
     "haunstetten süd": "Haunstetten-Siebenbrunn_Augsburg",
     "haunstetten": "Haunstetten-Siebenbrunn_Augsburg",
     "göggingen": "Göggingen_Augsburg",
+    "göggingen uni": "Göggingen_Augsburg",
     "hochzoll": "Hochzoll_Augsburg",
     "hochzoll mitte": "Hochzoll_Augsburg",
     "firnhaberau": "Firnhaberau_Augsburg",
