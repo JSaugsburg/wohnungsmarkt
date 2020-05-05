@@ -83,6 +83,7 @@ viertel_map = {
     "kriegshaber cityrand": "Kriegshaber_Augsburg",
     "bärenkeller": "Bärenkeller_Augsburg",
     "lechhausen": "Lechhausen_Augsburg",
+    "kleesiedlung": "Lechhausen_Augsburg",
     "oberhausen": "Oberhausen_Augsburg",
     "augsburg oberhausen": "Oberhausen_Augsburg",
     "rechts der wertach": "Oberhausen_Augsburg",
@@ -116,6 +117,7 @@ viertel_map = {
     "bleicherviertel": "Innenstadt_Augsburg",
     "beethovenviertel": "Innenstadt_Augsburg",
     "heilig-kreuz-viertel": "Innenstadt_Augsburg",
+    "hauptbahnhof": "Innenstadt_Augsburg",
     "augsburg": None,
     "bayern - augsburg": None,
     "königsbrunn": None,
@@ -123,6 +125,7 @@ viertel_map = {
     "biburg": None,
     "bergen": None,
     "pöttmes": None,
+    "kutzenhausen": None,
     "zusmarshausen": None,
     "aystetten": None,
     "neusäß": None,
@@ -295,6 +298,8 @@ def get_address(soup):
         address_city = "Diedorf"
     elif viertel == "lettenbach":
         address_city = "Diedorf"
+    elif viertel == "kutzenhausen":
+        address_city = "Kutzenhausen"
     elif "friedberg" in viertel:
         address_city = "Friedberg"
     else:
