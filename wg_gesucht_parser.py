@@ -9,7 +9,7 @@ import configparser
 from bs4 import BeautifulSoup
 from psycopg2.extras import Json
 from datetime import datetime, timedelta
-from requests.exceptions import TooManyRedirects
+from requests.exceptions import TooManyRedirects, HTTPError
 
 
 assert (len(sys.argv) == 3), "Too few/many arguments"
@@ -68,6 +68,7 @@ viertel_map = {
     "hochfeld": "Hochfeld_Augsburg",
     "hochfeld uni": "Hochfeld_Augsburg",
     "prinz karl viertel": "Hochfeld_Augsburg",
+    "haunstetter straße bhf": "Hochfeld_Augsburg",
     "bergheim": "Bergheim_Augsburg",
     "innenstadt": "Innenstadt_Augsburg",
     "haunstetten-siebenbrunn": "Haunstetten-Siebenbrunn_Augsburg",
@@ -341,7 +342,10 @@ def get_image(soup):
     if "placeholder" in img_url:
         img_raw = None
     else:
-        img_raw = http_get(img_url).content
+        try:
+            img_raw = http_get(img_url).content
+        except HTTPError:
+            img_raw = None
 
     return img_raw
 
