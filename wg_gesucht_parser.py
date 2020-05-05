@@ -81,6 +81,7 @@ viertel_map = {
     "hammerschmiede": "Hammerschmiede_Augsburg",
     "kriegshaber": "Kriegshaber_Augsburg",
     "kriegshaber cityrand": "Kriegshaber_Augsburg",
+    "augsburg cityrand": "Kriegshaber_Augsburg",
     "bärenkeller": "Bärenkeller_Augsburg",
     "lechhausen": "Lechhausen_Augsburg",
     "kleesiedlung": "Lechhausen_Augsburg",
