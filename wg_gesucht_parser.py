@@ -71,6 +71,7 @@ viertel_map = {
     "haunstetter straße bhf": "Hochfeld_Augsburg",
     "bergheim": "Bergheim_Augsburg",
     "innenstadt": "Innenstadt_Augsburg",
+    "jakobertor": "Innenstadt_Augsburg",
     "haunstetten-siebenbrunn": "Haunstetten-Siebenbrunn_Augsburg",
     "haunstetten nord": "Haunstetten-Siebenbrunn_Augsburg",
     "haunstetten süd": "Haunstetten-Siebenbrunn_Augsburg",
