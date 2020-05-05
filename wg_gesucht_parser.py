@@ -86,9 +86,12 @@ viertel_map = {
     "augsburg oberhausen": "Oberhausen_Augsburg",
     "rechts der wertach": "Oberhausen_Augsburg",
     "links der wertach": "Oberhausen_Augsburg",
+    "links der wertach-süd": "Oberhausen_Augsburg",
     "man viertel": "Oberhausen_Augsburg",
     "zentrum": "Innenstadt_Augsburg",
     "textilviertel": "Spickel-Herrenbach_Augsburg",
+    "textielviertel": "Spickel-Herrenbach_Augsburg",
+    "textil viertel city-galerie": "Spickel-Herrenbach_Augsburg",
     "jakobervorstadt": "Innenstadt_Augsburg",
     "bismarckviertel": "Innenstadt_Augsburg",
     "bismarkviertel": "Innenstadt_Augsburg",
@@ -96,6 +99,7 @@ viertel_map = {
     "mitte": "Innenstadt_Augsburg",
     "georgsviertel": "Innenstadt_Augsburg",
     "georgs- und kreuzviertel": "Innenstadt_Augsburg",
+    "kreuzviertel": "Innenstadt_Augsburg",
     "am schäfflerbach": "Innenstadt_Augsburg",
     "domviertel": "Innenstadt_Augsburg",
     "theaterviertel": "Innenstadt_Augsburg",
@@ -121,7 +125,10 @@ viertel_map = {
     "steppach": None,
     "vogelsang": None,
     "gersthofen": None,
+    "lettenbach": None,
+    "westheim b.augsburg": None,
     "friedberg-west": None,
+    "friedberg west": None,
     "friedberg": None,
     "deutschland": None,
     "": None
@@ -273,11 +280,15 @@ def get_address(soup):
         address_city = "Aystetten"
     elif viertel == "neusäß":
         address_city = "Neusäß"
+    elif viertel == "westheim b.augsburg":
+        address_city = "Neusäß"
     elif viertel == "steppach":
         address_city = "Neusäß"
     elif viertel == "gersthofen":
         address_city = "Gersthofen"
     elif viertel == "vogelsang":
+        address_city = "Diedorf"
+    elif viertel == "lettenbach":
         address_city = "Diedorf"
     elif "friedberg" in viertel:
         address_city = "Friedberg"
