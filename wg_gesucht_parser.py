@@ -129,6 +129,7 @@ viertel_map = {
     "westheim b.augsburg": None,
     "friedberg-west": None,
     "friedberg west": None,
+    "friedberg süd": None,
     "friedberg": None,
     "deutschland": None,
     "": None
