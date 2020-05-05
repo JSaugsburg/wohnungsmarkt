@@ -57,6 +57,7 @@ viertel_map = {
     "uni-": "Universitätsviertel_Augsburg",
     "pfersee": "Pfersee_Augsburg",
     "rosenau-thelottviertel": "Pfersee_Augsburg",
+    "thelottviertel": "Pfersee_Augsburg",
     "antonsviertel": "Antonsviertel_Augsburg",
     "inningen": "Inningen_Augsburg",
     "spickel-herrenbach": "Spickel-Herrenbach_Augsburg",
