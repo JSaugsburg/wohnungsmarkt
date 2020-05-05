@@ -48,7 +48,8 @@ angaben_map = {
     "leaf": "ökostrom",
     "fire": "heizung",
     "group": "wg_geeignet",
-    "person-wheelchair": "barrierefrei"
+    "person-wheelchair": "barrierefrei",
+    "dining-set": "küche"
 }
 
 # viertel mapper
@@ -58,6 +59,7 @@ viertel_map = {
     "pfersee": "Pfersee_Augsburg",
     "rosenau-thelottviertel": "Pfersee_Augsburg",
     "thelottviertel": "Pfersee_Augsburg",
+    "thelott-viertel": "Pfersee_Augsburg",
     "antonsviertel": "Antonsviertel_Augsburg",
     "inningen": "Inningen_Augsburg",
     "spickel-herrenbach": "Spickel-Herrenbach_Augsburg",
@@ -81,6 +83,7 @@ viertel_map = {
     "bärenkeller": "Bärenkeller_Augsburg",
     "lechhausen": "Lechhausen_Augsburg",
     "oberhausen": "Oberhausen_Augsburg",
+    "augsburg oberhausen": "Oberhausen_Augsburg",
     "rechts der wertach": "Oberhausen_Augsburg",
     "links der wertach": "Oberhausen_Augsburg",
     "man viertel": "Oberhausen_Augsburg",
