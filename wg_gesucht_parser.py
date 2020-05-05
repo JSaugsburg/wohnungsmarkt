@@ -89,6 +89,7 @@ viertel_map = {
     "links der wertach-süd": "Oberhausen_Augsburg",
     "man viertel": "Oberhausen_Augsburg",
     "senkelbach": "Oberhausen_Augsburg",
+    "senkelbach gehört zum inn...": "Oberhausen_Augsburg",
     "zentrum": "Innenstadt_Augsburg",
     "textilviertel": "Spickel-Herrenbach_Augsburg",
     "textielviertel": "Spickel-Herrenbach_Augsburg",
