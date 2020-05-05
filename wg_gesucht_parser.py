@@ -56,6 +56,7 @@ viertel_map = {
     "uni": "Universitätsviertel_Augsburg",
     "uni-": "Universitätsviertel_Augsburg",
     "pfersee": "Pfersee_Augsburg",
+    "rosenau-thelottviertel": "Pfersee_Augsburg",
     "antonsviertel": "Antonsviertel_Augsburg",
     "inningen": "Inningen_Augsburg",
     "spickel-herrenbach": "Spickel-Herrenbach_Augsburg",
@@ -81,6 +82,7 @@ viertel_map = {
     "oberhausen": "Oberhausen_Augsburg",
     "rechts der wertach": "Oberhausen_Augsburg",
     "links der wertach": "Oberhausen_Augsburg",
+    "man viertel": "Oberhausen_Augsburg",
     "zentrum": "Innenstadt_Augsburg",
     "textilviertel": "Spickel-Herrenbach_Augsburg",
     "jakobervorstadt": "Innenstadt_Augsburg",
@@ -99,6 +101,7 @@ viertel_map = {
     "bleiche und pfärrle": "Innenstadt_Augsburg",
     "bleich und pfärrle": "Innenstadt_Augsburg",
     "beethovenviertel": "Innenstadt_Augsburg",
+    "heilig-kreuz-viertel": "Innenstadt_Augsburg",
     "augsburg": None,
     "bayern - augsburg": None,
     "königsbrunn": None,
@@ -111,6 +114,8 @@ viertel_map = {
     "neusäß": None,
     "steppach": None,
     "gersthofen": None,
+    "friedberg-west": None,
+    "friedberg": None,
     "deutschland": None,
     "": None
 }
@@ -232,6 +237,9 @@ def get_address(soup):
             "umgebung", ""
         ).strip().title()
 
+    if " - " in address_l[0]:
+        address_l[0] = address_l[0].replace(" - ", " ").strip()
+
     if "/" in address_l[0]:
         address_l[0] = address_l[0].split("/")[0].strip()
 
@@ -262,6 +270,8 @@ def get_address(soup):
         address_city = "Neusäß"
     elif viertel == "gersthofen":
         address_city = "Gersthofen"
+    elif "friedberg" in viertel:
+        address_city = "Friedberg"
     else:
         address_city = city
 
