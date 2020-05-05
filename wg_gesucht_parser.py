@@ -119,6 +119,7 @@ viertel_map = {
     "hauptbahnhof": "Innenstadt_Augsburg",
     "altstadt": "Innenstadt_Augsburg",
     "augsburg": None,
+    "tba": None,
     "bayern - augsburg": None,
     "königsbrunn": None,
     "stadtbergen": None,
