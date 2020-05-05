@@ -119,6 +119,7 @@ viertel_map = {
     "aystetten": None,
     "neusäß": None,
     "steppach": None,
+    "vogelsang": None,
     "gersthofen": None,
     "friedberg-west": None,
     "friedberg": None,
@@ -276,6 +277,8 @@ def get_address(soup):
         address_city = "Neusäß"
     elif viertel == "gersthofen":
         address_city = "Gersthofen"
+    elif viertel == "vogelsang":
+        address_city = "Diedorf"
     elif "friedberg" in viertel:
         address_city = "Friedberg"
     else:
