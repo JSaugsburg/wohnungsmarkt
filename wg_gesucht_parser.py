@@ -88,6 +88,7 @@ viertel_map = {
     "textilviertel": "Spickel-Herrenbach_Augsburg",
     "jakobervorstadt": "Innenstadt_Augsburg",
     "bismarckviertel": "Innenstadt_Augsburg",
+    "bismarkviertel": "Innenstadt_Augsburg",
     "bismarckviertel innenstadt": "Innenstadt_Augsburg",
     "mitte": "Innenstadt_Augsburg",
     "georgsviertel": "Innenstadt_Augsburg",
