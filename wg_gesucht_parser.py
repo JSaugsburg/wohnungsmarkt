@@ -88,6 +88,7 @@ viertel_map = {
     "augsburg oberhausen": "Oberhausen_Augsburg",
     "rechts der wertach": "Oberhausen_Augsburg",
     "links der wertach": "Oberhausen_Augsburg",
+    "plärrer": "Oberhausen_Augsburg",
     "links der wertach-süd": "Oberhausen_Augsburg",
     "man viertel": "Oberhausen_Augsburg",
     "senkelbach": "Oberhausen_Augsburg",
