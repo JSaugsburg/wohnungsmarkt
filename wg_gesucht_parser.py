@@ -55,7 +55,6 @@ angaben_map = {
 # viertel mapper
 viertel_map = {
     "uni": "Universitätsviertel_Augsburg",
-    "uni-": "Universitätsviertel_Augsburg",
     "pfersee": "Pfersee_Augsburg",
     "rosenau-thelottviertel": "Pfersee_Augsburg",
     "thelottviertel": "Pfersee_Augsburg",
@@ -67,6 +66,7 @@ viertel_map = {
     "spickel": "Spickel-Herrenbach_Augsburg",
     "herrenbach": "Spickel-Herrenbach_Augsburg",
     "hochfeld": "Hochfeld_Augsburg",
+    "hochfeld uni": "Hochfeld_Augsburg",
     "prinz karl viertel": "Hochfeld_Augsburg",
     "bergheim": "Bergheim_Augsburg",
     "innenstadt": "Innenstadt_Augsburg",
@@ -75,7 +75,6 @@ viertel_map = {
     "haunstetten süd": "Haunstetten-Siebenbrunn_Augsburg",
     "haunstetten": "Haunstetten-Siebenbrunn_Augsburg",
     "göggingen": "Göggingen_Augsburg",
-    "göggingen uni": "Göggingen_Augsburg",
     "hochzoll": "Hochzoll_Augsburg",
     "hochzoll mitte": "Hochzoll_Augsburg",
     "firnhaberau": "Firnhaberau_Augsburg",
