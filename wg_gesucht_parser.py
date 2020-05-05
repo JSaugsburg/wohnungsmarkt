@@ -92,6 +92,7 @@ viertel_map = {
     "senkelbach": "Oberhausen_Augsburg",
     "senkelbach gehört zum inn...": "Oberhausen_Augsburg",
     "zentrum": "Innenstadt_Augsburg",
+    "zentral minuten vom the...": "Innenstadt_Augsburg",
     "textilviertel": "Spickel-Herrenbach_Augsburg",
     "textielviertel": "Spickel-Herrenbach_Augsburg",
     "textil viertel city-galerie": "Spickel-Herrenbach_Augsburg",
