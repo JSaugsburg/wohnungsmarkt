@@ -92,13 +92,14 @@ viertel_map = {
     "augsburg oberhausen": "Oberhausen_Augsburg",
     "rechts der wertach": "Oberhausen_Augsburg",
     "links der wertach": "Oberhausen_Augsburg",
+    "oberhausen wertachbr...": "Oberhausen_Augsburg",
     "plärrer": "Oberhausen_Augsburg",
+    "wertachbrücke": "Oberhausen_Augsburg",
     "links der wertach-süd": "Oberhausen_Augsburg",
     "links-der-wertach-süd": "Oberhausen_Augsburg",
     "man viertel": "Oberhausen_Augsburg",
     "grenze innenstadt wertach...": "Oberhausen_Augsburg",
     "senkelbach": "Oberhausen_Augsburg",
-    "senkelbach gehört zum inn...": "Oberhausen_Augsburg",
     "zentrum": "Innenstadt_Augsburg",
     "textilviertel": "Spickel-Herrenbach_Augsburg",
     "jakobervorstadt": "Innenstadt_Augsburg",
@@ -120,30 +121,13 @@ viertel_map = {
     "bleich und pfärrle": "Innenstadt_Augsburg",
     "bleicherviertel": "Innenstadt_Augsburg",
     "beethovenviertel": "Innenstadt_Augsburg",
+    "bäckergasse": "Innenstadt_Augsburg",
     "heilig-kreuz-viertel": "Innenstadt_Augsburg",
     "hauptbahnhof": "Innenstadt_Augsburg",
     "altstadt": "Innenstadt_Augsburg",
+    "proviantbachviertel": "Innenstadt_Augsburg",
     "augsburg": None,
-    "tba": None,
     "bayern - augsburg": None,
-    "königsbrunn": None,
-    "stadtbergen": None,
-    "biburg": None,
-    "bergen": None,
-    "pöttmes": None,
-    "kutzenhausen": None,
-    "zusmarshausen": None,
-    "aystetten": None,
-    "neusäß": None,
-    "steppach": None,
-    "vogelsang": None,
-    "gersthofen": None,
-    "lettenbach": None,
-    "westheim b.augsburg": None,
-    "friedberg-west": None,
-    "friedberg west": None,
-    "friedberg süd": None,
-    "friedberg": None,
     "": None
 }
 
@@ -279,39 +263,53 @@ def get_address(soup):
     # königsbrunn und Stadtbergen liegen NICHT in Augsburg
     if viertel == "königsbrunn":
         address_city = "Königsbrunn"
-    elif viertel == "stadtbergen":
+        viertel_mapped = None
+    elif "stadtbergen" in viertel:
         address_city = "Stadtbergen"
+        viertel_mapped = None
     elif viertel == "biburg":
         address_city = "Diedorf"
+        viertel_mapped = None
     elif viertel == "bergen":
         address_city = "Affing"
+        viertel_mapped = None
     elif viertel == "pöttmes":
         address_city = "Pöttmes"
+        viertel_mapped = None
     elif viertel == "zusmarshausen":
         address_city = "Zusmarshausen"
+        viertel_mapped = None
     elif viertel == "aystetten":
         address_city = "Aystetten"
+        viertel_mapped = None
     elif viertel == "neusäß":
         address_city = "Neusäß"
+        viertel_mapped = None
     elif viertel == "westheim b.augsburg":
         address_city = "Neusäß"
+        viertel_mapped = None
     elif viertel == "steppach":
         address_city = "Neusäß"
+        viertel_mapped = None
     elif viertel == "gersthofen":
         address_city = "Gersthofen"
+        viertel_mapped = None
     elif viertel == "vogelsang":
         address_city = "Diedorf"
+        viertel_mapped = None
     elif viertel == "lettenbach":
         address_city = "Diedorf"
+        viertel_mapped = None
     elif viertel == "kutzenhausen":
         address_city = "Kutzenhausen"
+        viertel_mapped = None
     elif "friedberg" in viertel:
         address_city = "Friedberg"
+        viertel_mapped = None
     else:
-        address_city = city
-
-    # map the suburb name
-    viertel_mapped = viertel_map[viertel]
+        address_city = city 
+        # map the suburb name
+        viertel_mapped = viertel_map[viertel]
 
     return {
         "address_str": address_str,
