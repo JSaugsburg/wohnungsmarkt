@@ -80,6 +80,7 @@ viertel_map = {
     "göggingen": "Göggingen_Augsburg",
     "augsburg-göggingen": "Göggingen_Augsburg",
     "hochzoll": "Hochzoll_Augsburg",
+    "hochzoll-süd": "Hochzoll_Augsburg",
     "hochzoll mitte": "Hochzoll_Augsburg",
     "firnhaberau": "Firnhaberau_Augsburg",
     "universitätsviertel": "Universitätsviertel_Augsburg",
@@ -313,6 +314,12 @@ def get_address(soup):
         viertel_mapped = None
     elif "diedorf" in viertel:
         address_city = "Diedorf"
+        viertel_mapped = None
+    elif "graben" in viertel:
+        address_city = "Graben"
+        viertel_mapped = None
+    elif "großaitingen" in viertel:
+        address_city = "Großaitingen"
         viertel_mapped = None
     else:
         address_city = city
