@@ -97,7 +97,6 @@ viertel_map = {
     "wertachbrücke": "Oberhausen_Augsburg",
     "links der wertach-süd": "Oberhausen_Augsburg",
     "links-der-wertach-süd": "Oberhausen_Augsburg",
-    "man viertel": "Oberhausen_Augsburg",
     "grenze innenstadt wertach...": "Oberhausen_Augsburg",
     "senkelbach": "Oberhausen_Augsburg",
     "zentrum": "Innenstadt_Augsburg",
@@ -130,6 +129,7 @@ viertel_map = {
     "rotes tor": "Innenstadt_Augsburg",
     "ulrichsviertel": "Innenstadt_Augsburg",
     "königsplatz": "Innenstadt_Augsburg",
+    "bahnhofs- bismarckviertel": "Innenstadt_Augsburg",
     "augsburg": None,
     "": None
 }
@@ -262,8 +262,8 @@ def get_address(soup):
 
     address_str = " ".join(address_l)
     viertel = " ".join(address_l[0].split()[1:]).lower()
-    viertel = viertel.replace("landkreis", "")
-    viertel = viertel.replace("augsburg", "")
+    viertel = viertel.replace("landkreis", "").strip()
+    viertel = viertel.replace("augsburg", "").strip()
 
     # königsbrunn und Stadtbergen liegen NICHT in Augsburg
     if viertel == "königsbrunn":
