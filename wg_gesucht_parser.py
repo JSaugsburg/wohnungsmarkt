@@ -115,6 +115,7 @@ viertel_map = {
     "theaterviertel": "Innenstadt_Augsburg",
     "stadtjägerviertel": "Innenstadt_Augsburg",
     "stadtjäger": "Innenstadt_Augsburg",
+    "stadt-jäger viertel": "Innenstadt_Augsburg",
     "jakobervorstadt süd": "Innenstadt_Augsburg",
     "jakobervorstadt nord": "Innenstadt_Augsburg",
     "bleiche und pfärrle": "Innenstadt_Augsburg",
