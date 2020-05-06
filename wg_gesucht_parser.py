@@ -262,6 +262,8 @@ def get_address(soup):
 
     address_str = " ".join(address_l)
     viertel = " ".join(address_l[0].split()[1:]).lower()
+    viertel = viertel.replace("landkreis", "")
+    viertel = viertel.replace("augsburg", "")
 
     # königsbrunn und Stadtbergen liegen NICHT in Augsburg
     if viertel == "königsbrunn":
