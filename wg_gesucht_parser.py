@@ -309,6 +309,9 @@ def get_address(soup):
     elif "friedberg" in viertel:
         address_city = "Friedberg"
         viertel_mapped = None
+    elif "diedorf" in viertel:
+        address_city = "Diedorf"
+        viertel_mapped = None
     else:
         address_city = city
         # map the suburb name
