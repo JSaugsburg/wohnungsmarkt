@@ -126,6 +126,8 @@ viertel_map = {
     "hauptbahnhof": "Innenstadt_Augsburg",
     "altstadt": "Innenstadt_Augsburg",
     "proviantbachviertel": "Innenstadt_Augsburg",
+    "rotes tor": "Innenstadt_Augsburg",
+    "lechviertel": "Innenstadt_Augsburg",
     "augsburg": None,
     "bayern - augsburg": None,
     "": None
@@ -307,7 +309,7 @@ def get_address(soup):
         address_city = "Friedberg"
         viertel_mapped = None
     else:
-        address_city = city 
+        address_city = city
         # map the suburb name
         viertel_mapped = viertel_map[viertel]
 
