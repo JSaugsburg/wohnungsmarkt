@@ -129,6 +129,7 @@ viertel_map = {
     "proviantbachviertel": "Innenstadt_Augsburg",
     "rotes tor": "Innenstadt_Augsburg",
     "ulrichsviertel": "Innenstadt_Augsburg",
+    "königsplatz": "Innenstadt_Augsburg",
     "augsburg": None,
     "": None
 }
