@@ -133,6 +133,7 @@ viertel_map = {
     "ulrichsviertel": "Innenstadt_Augsburg",
     "königsplatz": "Innenstadt_Augsburg",
     "bahnhofs- bismarckviertel": "Innenstadt_Augsburg",
+    "stadtmitte": "Innenstadt_Augsburg",
     "augsburg": None,
     "": None
 }
