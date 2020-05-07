@@ -55,6 +55,7 @@ angaben_map = {
 # viertel mapper
 viertel_map = {
     "uni": "Universitätsviertel_Augsburg",
+    "univiertel": "Universitätsviertel_Augsburg",
     "pfersee": "Pfersee_Augsburg",
     "rosenau-thelottviertel": "Pfersee_Augsburg",
     "thelottviertel": "Pfersee_Augsburg",
@@ -109,6 +110,7 @@ viertel_map = {
     "bismarckviertel": "Innenstadt_Augsburg",
     "bismarkviertel": "Innenstadt_Augsburg",
     "bismarckviertel innenstadt": "Innenstadt_Augsburg",
+    "bismarkviertel innenstadt": "Innenstadt_Augsburg",
     "mitte": "Innenstadt_Augsburg",
     "georgsviertel": "Innenstadt_Augsburg",
     "georgs- und kreuzviertel": "Innenstadt_Augsburg",
@@ -326,6 +328,9 @@ def get_address(soup):
         viertel_mapped = None
     elif "großaitingen" in viertel:
         address_city = "Großaitingen"
+        viertel_mapped = None
+    elif "mering" in viertel:
+        address_city = "Mering"
         viertel_mapped = None
     else:
         address_city = city
