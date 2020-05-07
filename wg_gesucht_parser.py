@@ -127,6 +127,7 @@ viertel_map = {
     "hauptbahnhof": "Innenstadt_Augsburg",
     "altstadt": "Innenstadt_Augsburg",
     "proviantbachviertel": "Innenstadt_Augsburg",
+    "proviantbachquartier": "Innenstadt_Augsburg",
     "rotes tor": "Innenstadt_Augsburg",
     "ulrichsviertel": "Innenstadt_Augsburg",
     "königsplatz": "Innenstadt_Augsburg",
