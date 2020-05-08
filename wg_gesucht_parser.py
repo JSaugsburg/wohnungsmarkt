@@ -105,6 +105,8 @@ viertel_map = {
     "grenze innenstadt wertach...": "Oberhausen_Augsburg",
     "senkelbach": "Oberhausen_Augsburg",
     "zentrum": "Innenstadt_Augsburg",
+    "zentrum-domviertel": "Innenstadt_Augsburg",
+    "lechviertel": "Innenstadt_Augsburg",
     "textilviertel": "Spickel-Herrenbach_Augsburg",
     "jakobervorstadt": "Innenstadt_Augsburg",
     "bismarckviertel": "Innenstadt_Augsburg",
@@ -258,6 +260,11 @@ def get_address(soup):
     if "neben" in address_l[0].lower():
         address_l[0] = address_l[0].lower().replace(
             "neben", ""
+        ).strip().title()
+
+    if "richtung" in address_l[0].lower():
+        address_l[0] = address_l[0].lower().replace(
+            "richtung", ""
         ).strip().title()
 
     if "umgebung" in address_l[0].lower():
