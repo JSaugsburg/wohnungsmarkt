@@ -102,7 +102,6 @@ viertel_map = {
     "links der wertach-süd": "Oberhausen_Augsburg",
     "links-der-wertach-süd": "Oberhausen_Augsburg",
     "oberhausen bahnhof": "Oberhausen_Augsburg",
-    "grenze innenstadt wertach...": "Oberhausen_Augsburg",
     "senkelbach": "Oberhausen_Augsburg",
     "zentrum": "Innenstadt_Augsburg",
     "zentrum-domviertel": "Innenstadt_Augsburg",
@@ -296,7 +295,7 @@ def get_address(soup):
     if viertel == "königsbrunn":
         address_city = "Königsbrunn"
         viertel_mapped = None
-    elif "stadtbergen" in viertel:
+    elif "stadtbergen" in viertel or viertel == "leitershofen":
         address_city = "Stadtbergen"
         viertel_mapped = None
     elif "stadtrand" in viertel:
@@ -338,11 +337,17 @@ def get_address(soup):
     elif viertel == "kissing":
         address_city = "Kissing"
         viertel_mapped = None
+    elif viertel == "schwabmünchen":
+        address_city = "Schwabmünchen"
+        viertel_mapped = None
     elif viertel == "kutzenhausen" or viertel == "rommelsried":
         address_city = "Kutzenhausen"
         viertel_mapped = None
     elif "friedberg" in viertel:
         address_city = "Friedberg"
+        viertel_mapped = None
+    elif "heretsried" in viertel:
+        address_city = "Welden"
         viertel_mapped = None
     elif "diedorf" in viertel:
         address_city = "Diedorf"
