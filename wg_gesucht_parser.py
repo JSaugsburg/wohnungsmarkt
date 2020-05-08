@@ -272,6 +272,12 @@ def get_address(soup):
             "umgebung", ""
         ).strip().title()
 
+    if "bayern" in address_l[0].lower():
+        address_l[0] = address_l[0].lower().replace(
+            "bayern", ""
+        ).strip().title()
+
+
     if " - " in address_l[0]:
         address_l[0] = address_l[0].replace(" - ", " ").strip()
 
@@ -292,6 +298,9 @@ def get_address(soup):
         viertel_mapped = None
     elif "stadtbergen" in viertel:
         address_city = "Stadtbergen"
+        viertel_mapped = None
+    elif "stadtrand" in viertel:
+        address_city = "Friedberg"
         viertel_mapped = None
     elif viertel == "biburg":
         address_city = "Diedorf"
@@ -329,7 +338,7 @@ def get_address(soup):
     elif viertel == "kissing":
         address_city = "Kissing"
         viertel_mapped = None
-    elif viertel == "kutzenhausen":
+    elif viertel == "kutzenhausen" or viertel == "rommelsried":
         address_city = "Kutzenhausen"
         viertel_mapped = None
     elif "friedberg" in viertel:
