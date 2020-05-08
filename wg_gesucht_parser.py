@@ -255,6 +255,11 @@ def get_address(soup):
             "nähe", ""
         ).strip().title()
 
+    if "neben" in address_l[0].lower():
+        address_l[0] = address_l[0].lower().replace(
+            "neben", ""
+        ).strip().title()
+
     if "umgebung" in address_l[0].lower():
         address_l[0] = address_l[0].lower().replace(
             "umgebung", ""
@@ -313,6 +318,9 @@ def get_address(soup):
         viertel_mapped = None
     elif viertel == "lettenbach":
         address_city = "Diedorf"
+        viertel_mapped = None
+    elif viertel == "kissing":
+        address_city = "Kissing"
         viertel_mapped = None
     elif viertel == "kutzenhausen":
         address_city = "Kutzenhausen"
