@@ -52,107 +52,15 @@ angaben_map = {
     "dining-set": "küche"
 }
 
-# viertel mapper
-viertel_map = {
-    "uni": "Universitätsviertel_Augsburg",
-    "univiertel": "Universitätsviertel_Augsburg",
-    "pfersee": "Pfersee_Augsburg",
-    "rosenau-thelottviertel": "Pfersee_Augsburg",
-    "thelottviertel": "Pfersee_Augsburg",
-    "thellotviertel": "Pfersee_Augsburg",
-    "thelott-viertel": "Pfersee_Augsburg",
-    "rosenau": "Pfersee_Augsburg",
-    "antonsviertel": "Antonsviertel_Augsburg",
-    "inningen": "Inningen_Augsburg",
-    "spickel-herrenbach": "Spickel-Herrenbach_Augsburg",
-    "wolframviertel": "Spickel-Herrenbach_Augsburg",
-    "spickel": "Spickel-Herrenbach_Augsburg",
-    "herrenbach": "Spickel-Herrenbach_Augsburg",
-    "hochfeld": "Hochfeld_Augsburg",
-    "hochfeld uni": "Hochfeld_Augsburg",
-    "prinz karl viertel": "Hochfeld_Augsburg",
-    "haunstetter straße bhf": "Hochfeld_Augsburg",
-    "bergheim": "Bergheim_Augsburg",
-    "innenstadt": "Innenstadt_Augsburg",
-    "jakobertor": "Innenstadt_Augsburg",
-    "haunstetten-siebenbrunn": "Haunstetten-Siebenbrunn_Augsburg",
-    "haunstetten nord": "Haunstetten-Siebenbrunn_Augsburg",
-    "haunstetten süd": "Haunstetten-Siebenbrunn_Augsburg",
-    "haunstetten": "Haunstetten-Siebenbrunn_Augsburg",
-    "göggingen": "Göggingen_Augsburg",
-    "augsburg-göggingen": "Göggingen_Augsburg",
-    "hochzoll": "Hochzoll_Augsburg",
-    "hochzoll-süd": "Hochzoll_Augsburg",
-    "hochzoll mitte": "Hochzoll_Augsburg",
-    "firnhaberau": "Firnhaberau_Augsburg",
-    "universitätsviertel": "Universitätsviertel_Augsburg",
-    "hammerschmiede": "Hammerschmiede_Augsburg",
-    "kriegshaber": "Kriegshaber_Augsburg",
-    "bärenkeller": "Bärenkeller_Augsburg",
-    "lechhausen": "Lechhausen_Augsburg",
-    "kleesiedlung": "Lechhausen_Augsburg",
-    "oberhausen": "Oberhausen_Augsburg",
-    "augsburg oberhausen": "Oberhausen_Augsburg",
-    "rechts der wertach": "Oberhausen_Augsburg",
-    "links der wertach": "Oberhausen_Augsburg",
-    "oberhausen wertachbr...": "Oberhausen_Augsburg",
-    "plärrer": "Oberhausen_Augsburg",
-    "wertachviertel": "Oberhausen_Augsburg",
-    "wertachbrücke": "Oberhausen_Augsburg",
-    "links der wertach-süd": "Oberhausen_Augsburg",
-    "links-der-wertach-süd": "Oberhausen_Augsburg",
-    "oberhausen bahnhof": "Oberhausen_Augsburg",
-    "senkelbach": "Oberhausen_Augsburg",
-    "zentrum": "Innenstadt_Augsburg",
-    "zentrum-domviertel": "Innenstadt_Augsburg",
-    "lechviertel": "Innenstadt_Augsburg",
-    "textilviertel": "Spickel-Herrenbach_Augsburg",
-    "jakobervorstadt": "Innenstadt_Augsburg",
-    "bismarckviertel": "Innenstadt_Augsburg",
-    "bismarkviertel": "Innenstadt_Augsburg",
-    "bismarckviertel innenstadt": "Innenstadt_Augsburg",
-    "bismarkviertel innenstadt": "Innenstadt_Augsburg",
-    "mitte": "Innenstadt_Augsburg",
-    "georgsviertel": "Innenstadt_Augsburg",
-    "georgs- und kreuzviertel": "Innenstadt_Augsburg",
-    "kreuzviertel": "Innenstadt_Augsburg",
-    "am schäfflerbach": "Innenstadt_Augsburg",
-    "domviertel": "Innenstadt_Augsburg",
-    "theaterviertel": "Innenstadt_Augsburg",
-    "stadtjägerviertel": "Innenstadt_Augsburg",
-    "stadtjäger": "Innenstadt_Augsburg",
-    "stadt-jäger viertel": "Innenstadt_Augsburg",
-    "jakobervorstadt süd": "Innenstadt_Augsburg",
-    "jakobervorstadt-süd": "Innenstadt_Augsburg",
-    "jakobervorstadt nord": "Innenstadt_Augsburg",
-    "bleiche und pfärrle": "Innenstadt_Augsburg",
-    "bleich und pfärrle": "Innenstadt_Augsburg",
-    "bleicherviertel": "Innenstadt_Augsburg",
-    "beethovenviertel": "Innenstadt_Augsburg",
-    "bäckergasse": "Innenstadt_Augsburg",
-    "heilig-kreuz-viertel": "Innenstadt_Augsburg",
-    "hauptbahnhof": "Innenstadt_Augsburg",
-    "altstadt": "Innenstadt_Augsburg",
-    "proviantbachviertel": "Innenstadt_Augsburg",
-    "proviantbachquartier": "Innenstadt_Augsburg",
-    "rotes tor": "Innenstadt_Augsburg",
-    "ulrichsviertel": "Innenstadt_Augsburg",
-    "königsplatz": "Innenstadt_Augsburg",
-    "bahnhofs- bismarckviertel": "Innenstadt_Augsburg",
-    "stadtmitte": "Innenstadt_Augsburg",
-    "augsburg": None,
-    "": None
-}
-
 get_string = f"{url}{wtype_d[wtype]}-in-{city}.{city_codes[city]}.{wtype}.1."
 
 inserat_sql = """
-    INSERT INTO wg_gesucht.inserate (inserat_id, viertel, titel,
+    INSERT INTO wg_gesucht.inserate (inserat_id, titel,
     miete_gesamt, miete_kalt, miete_sonstige, nebenkosten,
     kaution, abstandszahlung, verfuegbar, city, frei_ab,
     frei_bis, groesse, mitbewohner, wohnungs_type, angaben,
     details, online_seit, realtor, adress_str) VALUES
-    (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s);
+    (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s);
     """
 
 images_sql = """
@@ -246,131 +154,10 @@ def get_address(soup):
     address_l = [
         " ".join(x.strip().split()) for x in div_text.split("|")[1:]
     ]
-    if "nähe" in address_l[1].lower():
-        address_l[1] = address_l[1].lower().replace(
-            "nähe", ""
-        ).strip().title()
-
-    if "nähe" in address_l[0].lower():
-        address_l[0] = address_l[0].lower().replace(
-            "nähe", ""
-        ).strip().title()
-
-    if "neben" in address_l[0].lower():
-        address_l[0] = address_l[0].lower().replace(
-            "neben", ""
-        ).strip().title()
-
-    if "richtung" in address_l[0].lower():
-        address_l[0] = address_l[0].lower().replace(
-            "richtung", ""
-        ).strip().title()
-
-    if "umgebung" in address_l[0].lower():
-        address_l[0] = address_l[0].lower().replace(
-            "umgebung", ""
-        ).strip().title()
-
-    if "bayern" in address_l[0].lower():
-        address_l[0] = address_l[0].lower().replace(
-            "bayern", ""
-        ).strip().title()
-
-
-    if " - " in address_l[0]:
-        address_l[0] = address_l[0].replace(" - ", " ").strip()
-
-    if "/" in address_l[0]:
-        address_l[0] = address_l[0].split("/")[0].strip()
-
-    # manchmal schreiben User die PLZ mit. Hier entfernen
-    address_l[0] = "".join([x for x in address_l[0] if not x.isdigit()])
 
     address_str = " ".join(address_l)
-    viertel = " ".join(address_l[0].split()[1:]).lower()
-    viertel = viertel.replace("landkreis", "").strip()
-    viertel = viertel.replace("augsburg", "").strip()
 
-    # königsbrunn und Stadtbergen liegen NICHT in Augsburg
-    if viertel == "königsbrunn":
-        address_city = "Königsbrunn"
-        viertel_mapped = None
-    elif "stadtbergen" in viertel or viertel == "leitershofen":
-        address_city = "Stadtbergen"
-        viertel_mapped = None
-    elif "stadtrand" in viertel:
-        address_city = "Friedberg"
-        viertel_mapped = None
-    elif viertel == "biburg":
-        address_city = "Diedorf"
-        viertel_mapped = None
-    elif viertel == "bergen":
-        address_city = "Affing"
-        viertel_mapped = None
-    elif viertel == "pöttmes":
-        address_city = "Pöttmes"
-        viertel_mapped = None
-    elif viertel == "zusmarshausen":
-        address_city = "Zusmarshausen"
-        viertel_mapped = None
-    elif viertel == "aystetten":
-        address_city = "Aystetten"
-        viertel_mapped = None
-    elif viertel == "neusäß":
-        address_city = "Neusäß"
-        viertel_mapped = None
-    elif viertel == "westheim b.augsburg":
-        address_city = "Neusäß"
-        viertel_mapped = None
-    elif viertel == "steppach":
-        address_city = "Neusäß"
-        viertel_mapped = None
-    elif viertel == "gersthofen":
-        address_city = "Gersthofen"
-        viertel_mapped = None
-    elif viertel == "vogelsang":
-        address_city = "Diedorf"
-        viertel_mapped = None
-    elif viertel == "lettenbach":
-        address_city = "Diedorf"
-        viertel_mapped = None
-    elif viertel == "kissing":
-        address_city = "Kissing"
-        viertel_mapped = None
-    elif viertel == "schwabmünchen":
-        address_city = "Schwabmünchen"
-        viertel_mapped = None
-    elif viertel == "kutzenhausen" or viertel == "rommelsried":
-        address_city = "Kutzenhausen"
-        viertel_mapped = None
-    elif "friedberg" in viertel:
-        address_city = "Friedberg"
-        viertel_mapped = None
-    elif "heretsried" in viertel:
-        address_city = "Welden"
-        viertel_mapped = None
-    elif "diedorf" in viertel:
-        address_city = "Diedorf"
-        viertel_mapped = None
-    elif "graben" in viertel:
-        address_city = "Graben"
-        viertel_mapped = None
-    elif "großaitingen" in viertel:
-        address_city = "Großaitingen"
-        viertel_mapped = None
-    elif "mering" in viertel:
-        address_city = "Mering"
-        viertel_mapped = None
-    else:
-        address_city = city
-        # map the suburb name
-        viertel_mapped = viertel_map[viertel]
-
-    return {
-        "address_str": address_str,
-        "viertel": viertel_mapped,
-        "city": address_city
-    }
+    return address_str
 
 def get_insert_dt(soup):
     t_string = soup.find_all(
@@ -674,7 +461,6 @@ for i in range(int(wg_counter), page_counter):
         print({k: v for k, v in inserat_parsed.items() if k != "img_raw"})
         preped_l = [
             inserat_parsed["id"],
-            inserat_parsed["address"]["viertel"],
             inserat_parsed["title"],
             inserat_parsed["costs"]["miete_gesamt"],
             inserat_parsed["costs"]["miete_kalt"],
@@ -683,7 +469,7 @@ for i in range(int(wg_counter), page_counter):
             inserat_parsed["costs"]["kaution"],
             inserat_parsed["costs"]["abstandszahlung"],
             inserat_parsed["available"],
-            inserat_parsed["address"]["city"],
+            city,
             inserat_parsed["availability"]["frei_ab"],
             inserat_parsed["availability"]["frei_bis"],
             Json(inserat_parsed["sizes"]),
@@ -693,7 +479,7 @@ for i in range(int(wg_counter), page_counter):
             Json(inserat_parsed["details"]),
             inserat_parsed["insert_dt"],
             inserat_parsed["realtor"],
-            inserat_parsed["address"]["address_str"]
+            inserat_parsed["address"]
         ]
 
         cur.execute(inserat_sql, preped_l)
