@@ -33,6 +33,32 @@ city_codes = {
     "Munchen": "90"
 }
 
+# WG-Art/en
+wg_art_l = [
+    "Studenten-WG",
+    "keine Zweck-WG",
+    "Männer-WG",
+    "Business-WG",
+    "Wohnheim",
+    "Vegetarisch/Vegan",
+    "Alleinerziehende",
+    "funktionale WG",
+    "Berufstätigen-WG",
+    "gemischte WG",
+    "WG mit Kindern",
+    "Verbindung",
+    "LGBTQIA+ freundlich",
+    "Senioren-WG",
+    "inklusive WG",
+    "Zweck-WG",
+    "Frauen-WG",
+    "Plus-WG",
+    "Mehrgenerationen",
+    "Azubi-WG",
+    "Wohnen für Hilfe",
+    "Internationals welcome"
+]
+
 # map icon-names to appropriate naming
 angaben_map = {
     "mixed-buildings": "haustyp",
@@ -364,8 +390,6 @@ def parse_wg(details_d):
         " ".join(x.text.strip().replace("\n", "").split()) for x in
               details.find_all("li")
     ]
-    # "Bewohneralter" is optional; so insert None at given position
-    d_list = [(x if x != "" else None) for x in d_list]
     # check if last list element indicates that room is unavailable
     if "momentan vermietet" in details.find_all("li")[-1].text:
         r_all = int(re.findall(r'\d+', d_list[2])[0])
@@ -383,19 +407,45 @@ def parse_wg(details_d):
 
         roommates_bytes = bytes([r_all] + r_comp)
 
-    # "Rauchen" is optional so add None if not present
-    if len(d_list) == 7:
-        d_list.insert(4, None)
+    # Rauchen
+    try:
+        smoking = [x for x in d_list if "rauch" in x.lower()][0]
+    except IndexError:
+        smoking = None
+
+    # Bewohneralter
+    try:
+        roommate_age = [x for x in d_list if "bewohneralter" in x.lower()][0]
+    except IndexError:
+        roommate_age = None
+
+    # Sprachen
+    try:
+        languages = [x for x in d_list if "sprache" in x.lower()][0]
+    except IndexError:
+        languages = None
+
+    # WG Art; Zweck-WG, Gemischte WG, etc.
+    art_l = [
+        x for x in d_list if [y for y in x.split(",") if y.strip() in wg_art_l]
+    ]
+    wg_art = " ".join(art_l) if art_l else None
+
+    # Gesucht wird ...
+    looking_for = [
+        x for x in d_list if x.split("zwischen")[0].strip() in [
+            "Frau", "Mann", "Geschlecht egal"
+        ]
+    ]
+    looking_for = looking_for[0] if looking_for else None 
 
     details_d["roommates_b"] = roommates_bytes
     details_d["details"] = {
-        "wg_size": d_list[0],
-        "wohnung_size": d_list[1],
-        "roommate_age": d_list[3],
-        "smoking": d_list[4],
-        "wg_type": d_list[5],
-        "languages": d_list[6],
-        "looking_for": d_list[7]
+        "roommate_age": roommate_age,
+        "smoking": smoking,
+        "wg_type": wg_art,
+        "languages": languages,
+        "looking_for": looking_for
     }
 
     # available: "frei_ab", "frei_bis"
