@@ -28,7 +28,7 @@ insert_osm_ids = """
     """
 
 update_city_sql = """
-    UPDATE wg_gesucht.dup_inserate
+    UPDATE wg_gesucht.inserate
     SET city = %s,
     viertel = %s,
     strasse = %s,
