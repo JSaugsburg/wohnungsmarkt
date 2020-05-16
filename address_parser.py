@@ -12,6 +12,15 @@ script_path = os.path.dirname(os.path.realpath(__file__))
 # main url wg-gesucht
 url = "https://www.wg-gesucht.de/"
 
+# these cities have no suburbs
+no_suburb_l = [
+    "Friedberg", "Dasing", "Königsbrunn", "Neusäß", "Aichach", "Dasing",
+    "Stadtbergen", "Diedorf", "Affing", "Pöttmes", "Zusmarshausen",
+    "Aystetten", "Gersthofen", "Friedberg", "Kutzenhausen", "Dinkelscherben"
+    "Graben", "Großaitingen", "Igling", "Mering", "Kissing", "Welden",
+    "Schwabmünchen", "Obergriesbach"
+]
+
 select_inserate_sql = """
     SELECT inserat_id, viertel, city, adress_str
     FROM wg_gesucht.inserate
@@ -36,7 +45,8 @@ update_city_sql = """
     plz = %s,
     neighbourhood = %s,
     lon = %s,
-    lat = %s
+    lat = %s,
+    osm_id = %s
     WHERE inserat_id = %s;
     """
 
@@ -99,16 +109,40 @@ def parse_address(address_str):
     assert len(fc["features"]) == 1
 
     osm_id = feat["properties"]["osm_id"]
-    city = feat["properties"]["address"]["city"]
-    viertel = feat["properties"]["address"]["suburb"] + "_" + city
-    strasse = feat["properties"]["address"]["road"]
+    if "city" in feat["properties"]["address"]:
+        city = feat["properties"]["address"]["city"]
+    elif "town" in feat["properties"]["address"]:
+        city = feat["properties"]["address"]["town"]
+    elif "village" in feat["properties"]["address"]:
+        city = feat["properties"]["address"]["village"]
+
+    if city in no_suburb_l:
+        viertel = None
+    else:
+        viertel = feat["properties"]["address"]["suburb"] + "_" + city
+        # map "Haunstetten" to "Haunstetten-Siebenbrunn"
+        if viertel == "Haunstetten_Augsburg":
+            viertel = "Haunstetten-Siebenbrunn_Augsburg"
+
+    if feat["properties"]["type"] in ("neighbourhood", "suburb", "administrative"):
+        strasse = None
+    else:
+        # verschiedene Abstufungen von "Strasse"
+        if "road" in feat["properties"]["address"]:
+            strasse = feat["properties"]["address"]["road"]
+        elif "pedestrian" in feat["properties"]["address"]:
+            strasse = feat["properties"]["address"]["pedestrian"]
 
     if "house_number" in feat["properties"]["address"]:
         hausnummer = feat["properties"]["address"]["house_number"]
     else:
         hausnummer = None
 
-    plz = feat["properties"]["address"]["postcode"]
+    # manche features weisen keine plz auf; hier überprüfen
+    if "postcode" in feat["properties"]["address"]:
+        plz = feat["properties"]["address"]["postcode"]
+    else:
+        plz = None
 
     if "neighbourhood" in feat["properties"]["address"]:
         neighbourhood = feat["properties"]["address"]["neighbourhood"]
@@ -140,10 +174,13 @@ def parse_address(address_str):
 
 
 for i in inserate:
-    address_str = i[2] + " " + " ".join(i[3].split()[2:])
+    if len(i[3].split()) == 2:
+        address_str = i[2] + " " + i[3].split()[1]
+    else:
+        address_str = i[2] + " " + " ".join(i[3].split()[2:])
     address_str = address_str.replace(" ", "+")
     print(i[0])
-    print(address_str)
+    print(i[3] + " .... " + address_str)
     osm_data = parse_address(address_str)
     print(osm_data)
     if i[2] != osm_data["city"]:
@@ -160,6 +197,7 @@ for i in inserate:
         osm_data["neighbourhood"],
         osm_data["lon"],
         osm_data["lat"],
+        osm_data["osm_id"],
         i[0],
     ))
     time.sleep(2)
