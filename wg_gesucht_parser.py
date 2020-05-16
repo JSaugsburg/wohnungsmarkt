@@ -437,7 +437,7 @@ def parse_wg(details_d):
             "Frau", "Mann", "Geschlecht egal"
         ]
     ]
-    looking_for = looking_for[0] if looking_for else None 
+    looking_for = looking_for[0] if looking_for else None
 
     details_d["roommates_b"] = roommates_bytes
     details_d["details"] = {
