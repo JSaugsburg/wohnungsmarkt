@@ -392,8 +392,13 @@ def parse_wg(details_d):
     ]
     # check if last list element indicates that room is unavailable
     if "momentan vermietet" in details.find_all("li")[-1].text:
-        r_all = int(re.findall(r'\d+', d_list[2])[0])
-        roommates_bytes = bytes([r_all, 0, 0, 0])
+        # manchmal wird keine Anzahl der Mitbehwoner angezeigt
+        # in diesem Falle None angeben
+        try:
+            r_all = int(re.findall(r'\d+', d_list[2])[0])
+            roommates_bytes = bytes([r_all, 0, 0, 0])
+        except IndexError:
+            roommates_bytes = None
     else:
         # parse roommates:
         # 4 Bytes [FF: All, FF: Women, FF: Men, FF: Diverse]
