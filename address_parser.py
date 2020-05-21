@@ -134,6 +134,10 @@ def parse_address(address_str):
             strasse = feat["properties"]["address"]["road"]
         elif "pedestrian" in feat["properties"]["address"]:
             strasse = feat["properties"]["address"]["pedestrian"]
+        elif "footway" in feat["properties"]["address"]:
+            strasse = feat["properties"]["address"]["footway"]
+        elif "park" in feat["properties"]["address"]:
+            strasse = feat["properties"]["address"]["park"]
 
     if "house_number" in feat["properties"]["address"]:
         hausnummer = feat["properties"]["address"]["house_number"]
@@ -159,6 +163,8 @@ def parse_address(address_str):
     # insert osm if necessary
     if osm_id not in osm_ids:
         cur.execute(insert_osm_ids, [osm_id, Json(fc), city])
+        # add new osm_id to list
+        osm_ids.append(osm_id)
 
     ret_d = {
         "osm_id": osm_id,
