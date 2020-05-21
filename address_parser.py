@@ -124,7 +124,9 @@ def parse_address(address_str):
         if viertel == "Haunstetten_Augsburg":
             viertel = "Haunstetten-Siebenbrunn_Augsburg"
 
-    if feat["properties"]["type"] in ("neighbourhood", "suburb", "administrative"):
+    # bei folgenden Feature Types keine Strasse
+    exclude_types = ("neighbourhood", "suburb", "administrative", "postcode")
+    if feat["properties"]["type"] in exclude_types:
         strasse = None
     else:
         # verschiedene Abstufungen von "Strasse"
