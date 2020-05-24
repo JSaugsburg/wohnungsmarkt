@@ -18,7 +18,7 @@ no_suburb_l = [
     "Stadtbergen", "Diedorf", "Affing", "Pöttmes", "Zusmarshausen",
     "Aystetten", "Gersthofen", "Friedberg", "Kutzenhausen", "Dinkelscherben",
     "Graben", "Großaitingen", "Igling", "Mering", "Kissing", "Welden",
-    "Schwabmünchen", "Obergriesbach", "Obermeitingen"
+    "Schwabmünchen", "Obergriesbach", "Obermeitingen", "Heretsried"
 ]
 
 select_inserate_sql = """
@@ -102,6 +102,11 @@ def parse_address(address_str):
     # bahnhof features rausfiltern
     feat = [
         x for x in feats if "station" not in x["properties"]["type"]
+    ][0]
+
+    # Gipfel (peak) features rausfiltern
+    feat = [
+        x for x in feats if "peak" not in x["properties"]["type"]
     ][0]
 
     # create FeatureCollection with only relevant feature
