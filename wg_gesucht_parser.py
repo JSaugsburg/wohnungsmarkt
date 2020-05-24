@@ -383,75 +383,80 @@ def parse_wg(details_d):
     details_d["angaben"] = angaben_d
 
     # roommates
-    details = [
-        x for x in h3 if x.text.strip() == "WG-Details"
-    ][0].parent.parent
-    d_list = [
-        " ".join(x.text.strip().replace("\n", "").split()) for x in
-              details.find_all("li")
-    ]
-    # check if last list element indicates that room is unavailable
-    if "momentan vermietet" in details.find_all("li")[-1].text:
-        # manchmal wird keine Anzahl der Mitbehwoner angezeigt
-        # in diesem Falle None angeben
-        try:
-            r_all = int(re.findall(r'\d+', d_list[2])[0])
-            roommates_bytes = bytes([r_all, 0, 0, 0])
-        except IndexError:
-            roommates_bytes = None
-    else:
-        # parse roommates:
-        # 4 Bytes [FF: All, FF: Women, FF: Men, FF: Diverse]
-        r = soup.find_all("span", title=re.compile("WG"))[0]
-        r_title = r.get("title")
-        r_splits = r_title.split(" ")
-        # format for roommates: 2er WG (1 Frau und 0 Männer und 0 Divers)
-        r_all = int("".join([x for x in r_splits[0] if x.isdigit()]))
-        comp = r_splits[2]
-        r_comp = [int(re.findall(r'\d+', x)[0]) for x in comp.split(",")]
-
-        roommates_bytes = bytes([r_all] + r_comp)
-
-    # Rauchen
-    try:
-        smoking = [x for x in d_list if "rauch" in x.lower()][0]
-    except IndexError:
-        smoking = None
-
-    # Bewohneralter
-    try:
-        roommate_age = [x for x in d_list if "bewohneralter" in x.lower()][0]
-    except IndexError:
-        roommate_age = None
-
-    # Sprachen
-    try:
-        languages = [x for x in d_list if "sprache" in x.lower()][0]
-    except IndexError:
-        languages = None
-
-    # WG Art; Zweck-WG, Gemischte WG, etc.
-    art_l = [
-        x for x in d_list if [y for y in x.split(",") if y.strip() in wg_art_l]
-    ]
-    wg_art = " ".join(art_l) if art_l else None
-
-    # Gesucht wird ...
-    looking_for = [
-        x for x in d_list if x.split("zwischen")[0].strip() in [
-            "Frau", "Mann", "Geschlecht egal"
+    # nur bei wtype 0 (WGs) nach Details suchen
+    if wtype == "0":
+        details = [
+            x for x in h3 if x.text.strip() == "WG-Details"
+        ][0].parent.parent
+        d_list = [
+            " ".join(x.text.strip().replace("\n", "").split()) for x in
+                  details.find_all("li")
         ]
-    ]
-    looking_for = looking_for[0] if looking_for else None
+        # check if last list element indicates that room is unavailable
+        if "momentan vermietet" in details.find_all("li")[-1].text:
+            # manchmal wird keine Anzahl der Mitbehwoner angezeigt
+            # in diesem Falle None angeben
+            try:
+                r_all = int(re.findall(r'\d+', d_list[2])[0])
+                roommates_bytes = bytes([r_all, 0, 0, 0])
+            except IndexError:
+                roommates_bytes = None
+        else:
+            # parse roommates:
+            # 4 Bytes [FF: All, FF: Women, FF: Men, FF: Diverse]
+            r = soup.find_all("span", title=re.compile("WG"))[0]
+            r_title = r.get("title")
+            r_splits = r_title.split(" ")
+            # format for roommates: 2er WG (1 Frau und 0 Männer und 0 Divers)
+            r_all = int("".join([x for x in r_splits[0] if x.isdigit()]))
+            comp = r_splits[2]
+            r_comp = [int(re.findall(r'\d+', x)[0]) for x in comp.split(",")]
 
-    details_d["roommates_b"] = roommates_bytes
-    details_d["details"] = {
-        "roommate_age": roommate_age,
-        "smoking": smoking,
-        "wg_type": wg_art,
-        "languages": languages,
-        "looking_for": looking_for
-    }
+            roommates_bytes = bytes([r_all] + r_comp)
+        # Rauchen
+        try:
+            smoking = [x for x in d_list if "rauch" in x.lower()][0]
+        except IndexError:
+            smoking = None
+
+        # Bewohneralter
+        try:
+            roommate_age = [x for x in d_list if "bewohneralter" in x.lower()][0]
+        except IndexError:
+            roommate_age = None
+
+        # Sprachen
+        try:
+            languages = [x for x in d_list if "sprache" in x.lower()][0]
+        except IndexError:
+            languages = None
+
+        # WG Art; Zweck-WG, Gemischte WG, etc.
+        art_l = [
+            x for x in d_list if [y for y in x.split(",") if y.strip() in wg_art_l]
+        ]
+        wg_art = " ".join(art_l) if art_l else None
+
+        # Gesucht wird ...
+        looking_for = [
+            x for x in d_list if x.split("zwischen")[0].strip() in [
+                "Frau", "Mann", "Geschlecht egal"
+            ]
+        ]
+        looking_for = looking_for[0] if looking_for else None
+
+        details_d["roommates_b"] = roommates_bytes
+        details_d["details"] = {
+            "roommate_age": roommate_age,
+            "smoking": smoking,
+            "wg_type": wg_art,
+            "languages": languages,
+            "looking_for": looking_for
+        }
+
+    elif wtype == "1":
+        details_d["roommates_b"] = None
+        details_d["details"] = None
 
     # available: "frei_ab", "frei_bis"
     if details_d["available"]:
@@ -547,4 +552,3 @@ for i in range(int(wg_counter), page_counter):
 
 cur.close()
 conn.close()
-
