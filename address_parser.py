@@ -16,7 +16,7 @@ url = "https://www.wg-gesucht.de/"
 no_suburb_l = [
     "Friedberg", "Dasing", "Königsbrunn", "Neusäß", "Aichach", "Dasing",
     "Stadtbergen", "Diedorf", "Affing", "Pöttmes", "Zusmarshausen",
-    "Aystetten", "Gersthofen", "Friedberg", "Kutzenhausen", "Dinkelscherben"
+    "Aystetten", "Gersthofen", "Friedberg", "Kutzenhausen", "Dinkelscherben",
     "Graben", "Großaitingen", "Igling", "Mering", "Kissing", "Welden",
     "Schwabmünchen", "Obergriesbach"
 ]
