@@ -138,6 +138,8 @@ def parse_address(address_str):
             strasse = feat["properties"]["address"]["footway"]
         elif "park" in feat["properties"]["address"]:
             strasse = feat["properties"]["address"]["park"]
+        elif "leisure" in feat["properties"]["address"]:
+            strasse = feat["properties"]["address"]["leisure"]
 
     if "house_number" in feat["properties"]["address"]:
         hausnummer = feat["properties"]["address"]["house_number"]
