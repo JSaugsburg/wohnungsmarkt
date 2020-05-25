@@ -18,7 +18,8 @@ no_suburb_l = [
     "Stadtbergen", "Diedorf", "Affing", "Pöttmes", "Zusmarshausen",
     "Aystetten", "Gersthofen", "Friedberg", "Kutzenhausen", "Dinkelscherben",
     "Graben", "Großaitingen", "Igling", "Mering", "Kissing", "Welden",
-    "Schwabmünchen", "Obergriesbach", "Obermeitingen", "Heretsried"
+    "Schwabmünchen", "Obergriesbach", "Obermeitingen", "Heretsried",
+    "Bobingen"
 ]
 
 select_inserate_sql = """
