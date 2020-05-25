@@ -123,6 +123,8 @@ def parse_address(address_str):
 
     if city in no_suburb_l:
         viertel = None
+    elif feat["properties"]["type"] == "hamlet":
+        viertel = None
     else:
         viertel = feat["properties"]["address"]["suburb"] + "_" + city
         # map "Haunstetten" to "Haunstetten-Siebenbrunn"
@@ -130,7 +132,12 @@ def parse_address(address_str):
             viertel = "Haunstetten-Siebenbrunn_Augsburg"
 
     # bei folgenden Feature Types keine Strasse
-    exclude_types = ("neighbourhood", "suburb", "administrative", "postcode")
+    exclude_types = ("neighbourhood",
+                     "suburb",
+                     "hamlet",
+                     "administrative",
+                     "postcode")
+
     if feat["properties"]["type"] in exclude_types:
         strasse = None
     else:
