@@ -12,16 +12,6 @@ script_path = os.path.dirname(os.path.realpath(__file__))
 # main url wg-gesucht
 url = "https://www.wg-gesucht.de/"
 
-# these cities have no suburbs
-no_suburb_l = [
-    "Friedberg", "Dasing", "Königsbrunn", "Neusäß", "Aichach", "Dasing",
-    "Stadtbergen", "Diedorf", "Affing", "Pöttmes", "Zusmarshausen",
-    "Aystetten", "Gersthofen", "Friedberg", "Kutzenhausen", "Dinkelscherben",
-    "Graben", "Großaitingen", "Igling", "Mering", "Kissing", "Welden",
-    "Schwabmünchen", "Obergriesbach", "Obermeitingen", "Heretsried",
-    "Bobingen"
-]
-
 select_inserate_sql = """
     SELECT inserat_id, viertel, city, adress_str
     FROM wg_gesucht.inserate
@@ -122,7 +112,7 @@ def parse_address(address_str):
     elif "village" in feat["properties"]["address"]:
         city = feat["properties"]["address"]["village"]
 
-    if city in no_suburb_l:
+    if city != "Augsburg":
         viertel = None
     elif feat["properties"]["type"] == "hamlet":
         viertel = None
