@@ -15,7 +15,8 @@ url = "https://www.wg-gesucht.de/"
 select_inserate_sql = """
     SELECT inserat_id, viertel, city, adress_str
     FROM wg_gesucht.inserate
-    WHERE osm_id IS NULL;
+    WHERE osm_id IS NULL
+    ORDER BY adress_str;
     """
 
 osm_ids_sql = """
