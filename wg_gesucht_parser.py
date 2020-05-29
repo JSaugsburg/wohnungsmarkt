@@ -454,7 +454,7 @@ def parse_wg(details_d):
             "looking_for": looking_for
         }
 
-    elif wtype == "1":
+    elif wtype in ("1", "2"):
         details_d["roommates_b"] = None
         details_d["details"] = None
 
