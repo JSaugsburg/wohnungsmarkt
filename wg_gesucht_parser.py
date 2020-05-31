@@ -81,12 +81,12 @@ angaben_map = {
 get_string = f"{url}{wtype_d[wtype]}-in-{city}.{city_codes[city]}.{wtype}.1."
 
 inserat_sql = """
-    INSERT INTO wg_gesucht.inserate (inserat_id, titel,
+    INSERT INTO wg_gesucht.inserate (wg_gesucht_id, titel,
     miete_gesamt, miete_kalt, miete_sonstige, nebenkosten,
     kaution, abstandszahlung, verfuegbar, city, frei_ab,
     frei_bis, groesse, mitbewohner, wohnungs_type, angaben,
-    details, online_seit, realtor, adress_str) VALUES
-    (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s);
+    details, online_seit, realtor, adress_str, inserat_id) VALUES
+    (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s);
     """
 
 images_sql = """
@@ -259,19 +259,33 @@ def get_details_from_main(soup):
     wgs_list = [x for x in wgs_list if int(get_id(x)) not in inserat_ids]
 
     # get genral info of wg inserat from main page
-    wg_items = [
-        {
-            "id": get_id(x),
-            "url": url + x.find("a").get("href"),
-            "realtor": x.find_all(
-                "div", class_="col-sm-12 flex_space_between"
-            )[-1].span.text,
-            "insert_dt": get_insert_dt(x),
-            "img_raw": get_image(x),
-            "address": get_address(x),
-            "available": is_available(x)
-        } for x in wgs_list
-    ]
+    wg_items = []
+
+    for x in wgs_list:
+        wg_gesucht_id = get_id(x)
+        inserat_url = url + x.find("a").get("href")
+        realtor = x.find_all(
+            "div", class_="col-sm-12 flex_space_between"
+        )[-1].span.text
+        insert_dt = get_insert_dt(x)
+        img_raw = get_image(x)
+        address = get_address(x)
+        available = is_available(x)
+        # cast to int to strip away the "time" info
+        dt_date_only = int(get_insert_dt(x).timestamp())
+        inserat_id = f"{get_id(x)}_{wtype}_{dt_date_only}"
+
+        inserat_d = {
+            "id": wg_gesucht_id,
+            "url": inserat_url,
+            "realtor": realtor,
+            "insert_dt": insert_dt,
+            "img_raw": img_raw,
+            "address": address,
+            "available": available,
+            "inserat_id": inserat_id
+        }
+        wg_items.append(inserat_d)
 
     return wg_items
 
@@ -539,12 +553,13 @@ for i in range(int(wg_counter), page_counter):
             Json(inserat_parsed["details"]),
             inserat_parsed["insert_dt"],
             inserat_parsed["realtor"],
-            inserat_parsed["address"]
+            inserat_parsed["address"],
+            inserat_parsed["inserat_id"]
         ]
 
         cur.execute(inserat_sql, preped_l)
         cur.execute(images_sql,
-                    [inserat_parsed["id"], inserat_parsed["img_raw"]]
+                    [inserat_parsed["inserat_id"], inserat_parsed["img_raw"]]
                     )
 
     with open(script_path + "/wg_counter", "w") as f:
