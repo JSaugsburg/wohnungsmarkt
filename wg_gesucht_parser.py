@@ -525,7 +525,7 @@ for i in range(int(wg_counter), page_counter):
 
     # filter out already parsed wgs
     main_details = [
-        x for x in main_details if int(x["id"]) not in inserat_ids
+        x for x in main_details if x["inserat_id"] not in inserat_ids
     ]
 
     print("parsing WGS")
