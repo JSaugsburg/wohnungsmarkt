@@ -456,9 +456,15 @@ def parse_wg(details_d):
     ][0].parent.a
     adress_lines = adresse_row.text.splitlines()
     adress_lines = [x.strip() for x in adress_lines if x.strip()]
-    plz = adress_lines[1].split()[0]
-    city_viertel = adress_lines[1].split()[1:]
-    adress_str = " ".join(city_viertel + [adress_lines[0]])
+
+    # manchmal keine genauere Adressangabe vorhanden
+    if len(adress_lines) == 2:
+        city_viertel = adress_lines[1].split()[1:]
+        plz = adress_lines[1].split()[0]
+        adress_str = " ".join(city_viertel + [adress_lines[0]])
+    elif len(adress_lines) == 1:
+        plz = adress_lines[0].split()[0]
+        adress_str = adress_lines[0].split()[1:]
 
     details_d["adress_str"] = adress_str
     details_d["plz"] = plz
