@@ -85,8 +85,8 @@ inserat_sql = """
     miete_gesamt, miete_kalt, miete_sonstige, nebenkosten,
     kaution, abstandszahlung, verfuegbar, city, frei_ab,
     frei_bis, groesse, mitbewohner, wohnungs_type, angaben,
-    details, online_seit, realtor, adress_str, inserat_id) VALUES
-    (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s);
+    details, online_seit, realtor, adress_str, inserat_id, plz) VALUES
+    (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s);
     """
 
 images_sql = """
@@ -163,27 +163,6 @@ def http_get_to_soup(url):
         print(f"Expected Content Type text/html, but got \
               {r.headers['Content-Type']} instead")
         raise TypeError
-
-def get_address(soup):
-    """
-
-    Retrieve address string of advert
-
-    :soup: BeautifulSoup object
-    :return: adress_str (string)
-
-    """
-    # get respective "div" element
-    div_body = soup.find("div", class_="col-sm-8 card_body")
-    div_text = soup.find("div", class_="col-xs-11").span.text
-    # first item is wd detail so [1:]
-    address_l = [
-        " ".join(x.strip().split()) for x in div_text.split("|")[1:]
-    ]
-
-    address_str = " ".join(address_l)
-
-    return address_str
 
 def get_insert_dt(soup):
     t_string = soup.find_all(
@@ -269,7 +248,6 @@ def get_details_from_main(soup):
         )[-1].span.text
         insert_dt = get_insert_dt(x)
         img_raw = get_image(x)
-        address = get_address(x)
         available = is_available(x)
         # cast to int to strip away the "time" info
         dt_date_only = int(get_insert_dt(x).timestamp())
@@ -281,7 +259,6 @@ def get_details_from_main(soup):
             "realtor": realtor,
             "insert_dt": insert_dt,
             "img_raw": img_raw,
-            "address": address,
             "available": available,
             "inserat_id": inserat_id
         }
@@ -472,6 +449,20 @@ def parse_wg(details_d):
         details_d["roommates_b"] = None
         details_d["details"] = None
 
+    # Adresse
+    # get respective "div" element
+    adresse_row = [
+        x for x in h3 if x.text.strip() == "Adresse"
+    ][0].parent.a
+    adress_lines = adresse_row.text.splitlines()
+    adress_lines = [x.strip() for x in adress_lines if x.strip()]
+    plz = adress_lines[1].split()[0]
+    city_viertel = adress_lines[1].split()[1:]
+    adress_str = " ".join(city_viertel + [adress_lines[0]])
+
+    details_d["adress_str"] = adress_str
+    details_d["plz"] = plz
+
     # available: "frei_ab", "frei_bis"
     if details_d["available"]:
         avlblty_row = [
@@ -553,8 +544,9 @@ for i in range(int(wg_counter), page_counter):
             Json(inserat_parsed["details"]),
             inserat_parsed["insert_dt"],
             inserat_parsed["realtor"],
-            inserat_parsed["address"],
-            inserat_parsed["inserat_id"]
+            inserat_parsed["adress_str"],
+            inserat_parsed["inserat_id"],
+            inserat_parsed["plz"],
         ]
 
         cur.execute(inserat_sql, preped_l)
