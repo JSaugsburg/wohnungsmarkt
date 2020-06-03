@@ -16,6 +16,9 @@ city = sys.argv[2].lower()
 # main url
 url = "https://www.immobilienscout24.de/"
 
+# expose-url
+expo_url = url + "expose/"
+
 wtype_d = {
     "0": "wohnung-mieten"
 }
@@ -47,6 +50,43 @@ def http_get_to_soup(url):
         print(f"Expected Content Type text/html, but got \
               {r.headers['Content-Type']} instead")
         raise TypeError
+
+def parse_expose(data_id):
+    soup = http_get_to_soup(expo_url + data_id)
+
+    # Titel
+    titel = soup.find("h1", id="expose-title").text
+
+    # Adresse
+    adress_block = soup.find("div", class_="address-block")
+    adress_parts = [x.text for x in adress_block.find_all("span")]
+
+    s = 'Die vollständige Adresse der Immobilie erhalten Sie vom Anbieter.'
+
+    # ohne Adress Details
+    if s in adress_parts:
+        adress_str = adress_parts[0].replace(",", "")
+        plz = adress_str.split()[0]
+        viertel = adress_str.split()[-1]
+        adress_str = " ".join(adress_str.split()[1:])
+        adress_str = adress_str.strip()
+    else:
+        plz = adress_parts[1].split()[0]
+        viertel = adress_parts[1].split()[-1]
+        # get rid of plz
+        adress_main = " ".join(adress_parts[1].strip().split()[1:])
+        adress_combed = " ".join(
+            [adress_main, adress_parts[0].strip()]
+        )
+        adress_str = adress_combed.replace(",", "")
+
+    ret_d = {
+        "titel": titel,
+        "plz": plz,
+        "adress_str": adress_str,
+        "viertel": viertel
+    }
+
 
 # page counter
 count = 1

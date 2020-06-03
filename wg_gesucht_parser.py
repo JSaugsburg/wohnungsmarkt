@@ -119,22 +119,22 @@ inserat_ids = [x[0] for x in rows] if len(rows) > 0 else []
 print(f"Bisher {len(inserat_ids)} inserate für {city} und {wtype_d[wtype]}")
 
 # login to wg-gesucht
-session = requests.Session()
-login_url = url + "ajax/api/Smp/api.php?action=login"
-payload = {
-    "login_email_username": config["WGGESUCHT"]["email"],
-    "login_password": config["WGGESUCHT"]["pw"],
-    "login_form_auto_login": "1",
-    "display_language": "de",
-}
-login = session.post(
-    login_url,
-    json=payload
-)
-
-if not login.json():
-    print("Could not log in with the given email and password")
-    sys.exit(1)
+# session = requests.Session()
+# login_url = url + "ajax/api/Smp/api.php?action=login"
+# payload = {
+#     "login_email_username": config["WGGESUCHT"]["email"],
+#     "login_password": config["WGGESUCHT"]["pw"],
+#     "login_form_auto_login": "1",
+#     "display_language": "de",
+# }
+# login = session.post(
+#     login_url,
+#     json=payload
+# )
+# 
+# if not login.json():
+#     print("Could not log in with the given email and password")
+#     sys.exit(1)
 
 def http_get(url):
     try:
