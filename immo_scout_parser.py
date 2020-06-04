@@ -80,12 +80,29 @@ def parse_expose(data_id):
         )
         adress_str = adress_combed.replace(",", "")
 
+    # Kosten
+    kosten_h = [x for x in soup.find_all("h4") if x.text == " Kosten "][0]
+    kosten_block = list(kosten_h.next_elements)[2]
+    kosten_l = [x.text for x in kosten_block.find_all("dl")]
+    miete_kalt = int("".join([x for x in kosten_l[0] if x.isnumeric()]))
+    nebenkosten = "".join([x for x in kosten_l[1] if x.isnumeric()])
+    miete_heizkosten = "".join([x for x in kosten_l[2] if x.isnumeric()])
+    miete_gesamt = "".join([x for x in kosten_l[3] if x.isnumeric()])
+    kaution = "".join([x for x in kosten_l[4] if x.isnumeric()])
+
     ret_d = {
         "titel": titel,
         "plz": plz,
         "adress_str": adress_str,
-        "viertel": viertel
+        "viertel": viertel,
+        "miete_kalt": miete_kalt,
+        "nebenkosten": nebenkosten,
+        "miete_heizkosten": miete_heizkosten,
+        "miete_gesamt": miete_gesamt,
+        "kaution": kaution
     }
+
+    return ret_d
 
 
 # page counter
