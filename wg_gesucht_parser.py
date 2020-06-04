@@ -118,24 +118,6 @@ rows = cur.fetchall()
 inserat_ids = [x[0] for x in rows] if len(rows) > 0 else []
 print(f"Bisher {len(inserat_ids)} inserate für {city} und {wtype_d[wtype]}")
 
-# login to wg-gesucht
-# session = requests.Session()
-# login_url = url + "ajax/api/Smp/api.php?action=login"
-# payload = {
-#     "login_email_username": config["WGGESUCHT"]["email"],
-#     "login_password": config["WGGESUCHT"]["pw"],
-#     "login_form_auto_login": "1",
-#     "display_language": "de",
-# }
-# login = session.post(
-#     login_url,
-#     json=payload
-# )
-# 
-# if not login.json():
-#     print("Could not log in with the given email and password")
-#     sys.exit(1)
-
 def http_get(url):
     try:
         r = requests.get(url)
@@ -466,6 +448,13 @@ def parse_wg(details_d):
         plz = adress_lines[0].split()[0]
         adress_str = adress_lines[0].split()[1:]
 
+    # Manchmal wird plz nicht angegeben; Beispiel "Augsburg Augsburg Innenstadt"
+    # dann plz -> None
+    try:
+        assert plz.isdigit()
+    except AssertionError:
+        plz = None
+
     details_d["adress_str"] = adress_str
     details_d["plz"] = plz
 
@@ -488,8 +477,6 @@ def parse_wg(details_d):
             ).isoformat()
         else:
             avlblty_dict["frei_bis"] = None
-        # since when is offer online?
-        online_raw = soup.find_all("b", class_="noprint")
     else:
         # wg is opccupied
         avlblty_dict = {
