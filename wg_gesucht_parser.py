@@ -492,7 +492,7 @@ def parse_wg(details_d):
     return details_d
 
 # read current counter
-with open(script_path + "/wg_counter") as f:
+with open(script_path + "/wg_counter_" + wtype) as f:
     wg_counter = f.read()
 print("wg-gesucht momentan bei " + wg_counter)
 
@@ -550,7 +550,7 @@ for i in range(int(wg_counter), page_counter):
                     [inserat_parsed["inserat_id"], inserat_parsed["img_raw"]]
                     )
 
-    with open(script_path + "/wg_counter", "w") as f:
+    with open(script_path + "/wg_counter_" + wtype, "w") as f:
         f.write(str(i))
 
 cur.close()
