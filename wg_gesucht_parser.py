@@ -218,6 +218,9 @@ def get_details_from_main(soup):
     ]
     # filter out already parsed wgs
     wgs_list = [x for x in wgs_list if int(get_id(x)) not in inserat_ids]
+    if len(wgs_list) == 0:
+        print(f"{datetime.now()} keine neuen Inserate mehr für {city}")
+        sys.exit(0)
 
     # get genral info of wg inserat from main page
     wg_items = []

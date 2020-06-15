@@ -63,7 +63,7 @@ inserat_insert_sql = """
     energietraeger, heizungsart, energieausweis, energieausweis_art,
     energieeffizienzklasse, baujahr_gebaeude, zimmer_anzahl,
     schlafzimmer, wohnflaeche, nutzflaeche, schufa_auskunft,
-    online_besichtigung) VALUES
+    online_besichtigung, such_str) VALUES
     (%(data_id)s,%(titel)s,%(miete_gesamt)s,%(miete_kalt)s,
     %(miete_heizkosten)s,%(nebenkosten)s,%(kaution)s,%(verfuegbar)s,
     %(frei_ab)s,%(wohnungs_type)s,%(realtor)s,
@@ -75,7 +75,7 @@ inserat_insert_sql = """
     %(heizungsart)s,%(energieausweis)s,%(energieausweis_art)s,
     %(energieeffizienzklasse)s,%(baujahr_gebaeude)s,
     %(zimmer_anzahl)s,%(schlafzimmer)s,%(wohnflaeche)s,%(nutzflaeche)s,
-    %(schufa_auskunft)s,%(online_besichtigung)s);
+    %(schufa_auskunft)s,%(online_besichtigung)s,%(such_str)s);
     """
 
 images_insert_sql = """
@@ -392,7 +392,7 @@ def parse_expose(soup):
         if re.search(r"[sS].+t|[vV]ereinbarung", date_str):
             frei_ab = datetime.now().date()
         else:
-            date_str = re.search(r"\d{2}[/.,-]\d{2}[/.,-]\d{2,4}", date_str)
+            date_str = re.search(r"\d{2,4}?[/.,-]\d{2}[/.,-]\d{2,4}", date_str)
             if date_str:
                 frei_ab = get_date(date_str.group())
             else:
@@ -715,7 +715,8 @@ def parse_expose(soup):
         "energieausweis": energieausweis,
         "energieausweis_art": energieausweis_art,
         "energieeffizienzklasse": energieeffizienzklasse,
-        "verfuegbar": True
+        "verfuegbar": True,
+        "such_str": city
     }
     print(ret_d)
     print()
@@ -743,7 +744,12 @@ while count <= max_page_n:
     result_l = items_l.find_all("li", class_="result-list__listing")
 
     data_ids = [x.get("data-id") for x in result_l]
+
+    # bereits geparste exposes filtern
     data_ids = [x for x in data_ids if x not in inserat_ids]
+    if len(data_ids) == 0:
+        print(f"{datetime.now()} keine neuen Inserate mehr für {city}")
+        sys.exit(0)
 
     realt_items = [
         x.find("div",
