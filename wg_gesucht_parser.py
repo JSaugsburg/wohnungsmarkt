@@ -182,7 +182,6 @@ def get_image(soup):
 
 def get_id(soup):
     inserat_id = soup.get("id").split("-")[-1]
-    print(url + inserat_id + ".html")
 
     return inserat_id
 
