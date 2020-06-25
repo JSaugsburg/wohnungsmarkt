@@ -118,6 +118,7 @@ garage_d = {
     "Außenstellplatz": 1,
     "Außenstellplätze": 1,
     "Carport": 2,
+    "Carports": 3,
     "Duplex-Stellplatz": 3,
     "Garage": 4,
     "Garagen": 4,

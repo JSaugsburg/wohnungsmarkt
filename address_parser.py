@@ -70,18 +70,14 @@ print(f"Bisher {len(osm_ids)} osm_ids")
 def http_get(url):
     try:
         r = requests.get(url)
-        # check if captcha
-        if "https://www.wg-gesucht.de/cuba.html" in r.url:
-            raise TooManyRedirects("Captcha appeared! Exit")
-
-        if r.status_code == 200:
+        if r.tatus_code == 200:
             return r
         else:
             raise requests.HTTPError(
                 f"Request failed with status_code {r.status_code}"
             )
     except requests.ConnectionError as e:
-        print(url + " probably offline!")
+        print(e, url + " probably offline!")
 
 def parse_address(address_str):
     query_str = "https://nominatim.openstreetmap.org/search?" \
@@ -201,7 +197,7 @@ for i in inserate:
         print(f"---replacing {osm_data['city']} for {i[2]}----")
     if i[1] != osm_data["viertel"]:
         print(f"---replacing {osm_data['viertel']} for {i[1]}----")
-
+    """
     cur.execute(update_city_sql, (
         osm_data["city"],
         osm_data["viertel"],
@@ -214,6 +210,7 @@ for i in inserate:
         osm_data["osm_id"],
         i[0],
     ))
+    """
     time.sleep(2)
     print()
 
