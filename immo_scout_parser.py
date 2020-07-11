@@ -28,13 +28,6 @@ conn = psycopg2.connect(
     host=config["DATABASE"]["host"]
 )
 
-# connect to db
-conn = psycopg2.connect(
-    dbname=config["DATABASE"]["dbname"],
-    user=config["DATABASE"]["user"],
-    host=config["DATABASE"]["host"]
-)
-
 conn.autocommit = True
 cur = conn.cursor()
 
