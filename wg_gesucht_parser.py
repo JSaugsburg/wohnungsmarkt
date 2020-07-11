@@ -219,6 +219,8 @@ def get_details_from_main(soup):
     wgs_list = [x for x in wgs_list if int(get_id(x)) not in inserat_ids]
     if len(wgs_list) == 0:
         print(f"{datetime.now()} keine neuen Inserate mehr für {city}")
+        with open(script_path + "/wg_counter_" + wtype, "w") as f:
+            f.write(str(i + 1))
         sys.exit(0)
 
     # get genral info of wg inserat from main page
