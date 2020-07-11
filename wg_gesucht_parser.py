@@ -95,7 +95,7 @@ images_sql = """
     """
 
 inserat_ids_sql = """
-    SELECT inserat_id FROM wg_gesucht.inserate
+    SELECT wg_gesucht_id FROM wg_gesucht.inserate
     WHERE wohnungs_type = %s;
     """
 # read config
