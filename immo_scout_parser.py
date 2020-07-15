@@ -38,11 +38,44 @@ url = "https://www.immobilienscout24.de/"
 expo_url = url + "expose/"
 
 wtype_d = {
-    "0": "wohnung-mieten"
+    "0": "wohnung-mieten",
+    "1": "wohnung-kaufen"
 }
 
-inserat_select_sql = """
-    SELECT inserat_id FROM immoscout.inserate;
+if wtype == "1":
+    inserat_select_sql = """
+        SELECT inserat_id FROM immoscout.inserate_eigentum;
+        """
+else:
+    inserat_select_sql = """
+        SELECT inserat_id FROM immoscout.inserate;
+        """
+
+inserat_eigentum_insert_sql = """
+    INSERT INTO immoscout.inserate_eigentum(
+    inserat_id, titel, kaufpreis, kaufnebenkosten, eigenkapital,
+    nettodarlehen, provision, verfuegbar, vermietet, mieteinnahmen,
+    frei_ab, wohnungs_type, realtor, kosten_stellplatz,
+    plz, einbaukueche, aufzug, balkon_terrasse, gaeste_wc,
+    garten, keller, barrierefrei, ausstattung_qualitaet, etage,
+    etage_all, badezimmer, zustand, modernisierung_jahr, garage_stellplatz,
+    garage_stellplatz_cnt, energietraeger, heizungsart, energieausweis,
+    energieausweis_art, energieeffizienzklasse, baujahr_gebaeude,
+    zimmer_anzahl, schlafzimmer, wohnflaeche, nutzflaeche, schufa_auskunft,
+    online_besichtigung, such_str, hausgeld, wg_geeignet,
+    ferienwohnung_geeignet) VALUES
+    (%(data_id)s,%(titel)s,%(kaufpreis)s,%(kaufnebenkosten)s,
+    %(eigenkapital)s,%(nettodarlehen)s,%(provision)s,%(verfuegbar)s,
+    %(vermietet)s,%(mieteinnahmen)s,%(frei_ab)s,%(wohnungs_type)s,%(realtor)s,
+    %(kosten_stellplatz)s,%(plz)s,%(einbaukueche)s,%(aufzug)s,
+    %(balkon_terrasse)s,%(gaeste_wc)s,%(garten)s,%(keller)s,%(barrierefrei)s,
+    %(ausstattung_qualitaet)s,%(etage)s,%(etage_all)s,%(badezimmer)s,
+    %(zustand)s,%(modernisierung_jahr)s, %(garage_stellplatz)s,
+    %(garage_stellplatz_cnt)s,%(energietraeger)s,%(heizungsart)s,
+    %(energieausweis)s,%(energieausweis_art)s,%(energieeffizienzklasse)s,
+    %(baujahr_gebaeude)s,%(zimmer_anzahl)s,%(schlafzimmer)s,%(wohnflaeche)s,
+    %(nutzflaeche)s,%(schufa_auskunft)s,%(online_besichtigung)s,%(such_str)s,
+    %(hausgeld)s,%(wg_geeignet)s,%(ferienwohnung_geeignet)s);
     """
 
 inserat_insert_sql = """
@@ -71,6 +104,12 @@ inserat_insert_sql = """
     %(schufa_auskunft)s,%(online_besichtigung)s,%(such_str)s);
     """
 
+images_eigentum_insert_sql = """
+    INSERT INTO immoscout.images_eigentum_inserate(
+    image, id)
+    VALUES (%s, %s)
+    """
+
 images_insert_sql = """
     INSERT INTO immoscout.images_inserate(
     image, id)
@@ -82,6 +121,7 @@ haustier_d = {
     "Haustiere  Ja": 2,
     "Haustiere  Nein": 3
 }
+
 wohnungs_type_d = {
     "Souterrain": 1,
     "Erdgeschosswohnung": 2,
@@ -105,7 +145,6 @@ energieausweisart_d = {
     "Energieausweistyp Bedarfsausweis": 1,
     "Energieausweistyp Verbrauchsausweis": 2
 }
-
 
 garage_d = {
     "Außenstellplatz": 1,
@@ -231,9 +270,9 @@ def get_image(soup):
 
 def get_date(date_s):
     # manchmal werden zwei Datum angegeben
-    if "/" in date_s:
+    if "/" in date_s and len([x for x in date_s if x == "/"]) == 1:
         date_s = date_s.split("/")[0].strip()
-    date_patterns = ["%d.%m.%y", "%d.%m.%Y", "%Y-%m-%d"]
+    date_patterns = ["%d.%m.%y", "%d.%m.%Y", "%Y-%m-%d", "%d/%m/%Y"]
     for pattern in date_patterns:
         try:
             return datetime.strptime(date_s, pattern).date()
@@ -243,10 +282,19 @@ def get_date(date_s):
     sys.exit(0)
 
 def parse_expose(soup):
+
+    # regex string to extract floats
+    # https://stackoverflow.com/questions/4703390/how-to-extract-a-floating-number-from-a-string
+    reg = r"\d*\.*\d+"
+
+    # string in korrekte floats formatieren
+    # 1.382,75 -> 1382.75
+    floater = lambda a : a.replace(".", "").replace(",", ".")
+
     # Titel
     titel = soup.find("h1", id="expose-title").text
 
-    # Adresse
+    #################### Adresse #########################################
     adress_block = soup.find("div", class_="address-block")
     adress_parts = [x.text for x in adress_block.find_all("span")]
 
@@ -267,59 +315,7 @@ def parse_expose(soup):
         )
         adress_str = adress_combed.replace(",", "")
 
-    # Kosten
-    kosten_h = [x for x in soup.find_all("h4") if x.text == " Kosten "][0]
-    kosten_block = list(kosten_h.next_elements)[2]
-    kosten_l = [x.text for x in kosten_block.find_all("dl")]
-
-    # regex string to extract floats
-    # https://stackoverflow.com/questions/4703390/how-to-extract-a-floating-number-from-a-string
-    reg = r"\d*\.*\d+"
-
-    # string in korrekte floats formatieren
-    # 1.382,75 -> 1382.75
-    floater = lambda a : a.replace(".", "").replace(",", ".")
-
-    # Kaltmiete
-    miete_kalt = [x for x in kosten_l if "Kaltmiete" in x][0]
-    miete_kalt = re.findall(reg, floater(miete_kalt))[0]
-
-    # Nebenkosten
-    try:
-        nebenkosten = [x for x in kosten_l if "Nebenkosten" in x][0]
-        nebenkosten = re.findall(reg, floater(nebenkosten))[0]
-    except IndexError:
-        nebenkosten = None
-
-    # Heizkosten
-    try:
-        miete_heizkosten = [x for x in kosten_l if "Heizkosten" in x][0]
-        miete_heizkosten = re.findall(reg, floater(miete_heizkosten))[0]
-    except IndexError:
-        miete_heizkosten = None
-
-    # Kaution
-    try:
-        kaution = [x for x in kosten_l if "Kaution" in x][0]
-        kaution = re.findall(reg, floater(kaution))[0]
-    except IndexError:
-        kaution = None
-
-    # Kosten Stellplatz
-    try:
-        kosten_stellplatz = [x for x in kosten_l if "Miete für Garage" in x][0]
-        kosten_stellplatz = re.findall(reg, floater(kosten_stellplatz))[0]
-    except IndexError:
-        kosten_stellplatz = None
-
-    # Miete gesamt
-    try:
-        miete_gesamt = [x for x in kosten_l if "Gesamtmiete" in x][0]
-        miete_gesamt = re.findall(reg, floater(miete_gesamt))[0]
-    except IndexError:
-        miete_gesamt = None
-
-    # details
+    #################### Details #########################################
     details = soup.find_all(
         "div", class_="criteriagroup criteria-group--two-columns")[0]
     details_l = [x.text for x in details.find_all("dl")]
@@ -394,6 +390,7 @@ def parse_expose(soup):
                 frei_ab = datetime.now().date()
     else:
         frei_ab = datetime.now().date()
+        f_item = "No"
 
     # Zimmer
     # Schlafzimmer
@@ -447,6 +444,107 @@ def parse_expose(soup):
         garage_stellplatz_cnt = None
 
     assert len(details_l) == 0
+
+    #################### Kosten #########################################
+    kosten_h = [x for x in soup.find_all("h4") if x.text == " Kosten "][0]
+    kosten_block = list(kosten_h.next_elements)[2]
+    kosten_l = [x.text for x in kosten_block.find_all("dl")]
+
+    # bei Eigentum nach "Kaufpreis" suchen, bei Miete nach "Kaltmiete"
+    if wtype == "1":
+        kaufpreis = [x for x in kosten_l if "Kaufpreis" in x][0]
+        kaufpreis = int(re.findall(reg, floater(kaufpreis))[0])
+
+        # Formel für Kaufnebenkosten, Eigenkapital und Nettodarlehen
+        # https://www.immobilienscout24.de/baufinanzierung/finanzierungsrechner/
+        try:
+            provision = [x for x in kosten_l if "Provision" in x][0]
+            if any([x in provision.lower() for x in ("nein", "ohne")]):
+                provision = None
+            else:
+                provision = re.findall(reg, floater(provision))[0]
+                kaufnebenkosten = round(
+                    0.035 * kaufpreis + 0.015 * kaufpreis + 0.005 * \
+                    kaufpreis + float(provision) / 100 * kaufpreis
+                )
+        except IndexError:
+            provision = None
+        finally:
+            kaufnebenkosten = round(
+                0.035 * kaufpreis + 0.015 * kaufpreis + 0.005 * kaufpreis
+            )
+            eigenkapital = round(0.2 * int(kaufpreis))
+            nettodarlehen = kaufpreis + kaufnebenkosten - eigenkapital
+
+        # Hausgeld
+        try:
+            hausgeld = [x for x in kosten_l if "Hausgeld" in x][0]
+            hausgeld = re.findall(reg, floater(hausgeld))[0]
+        except IndexError:
+            hausgeld = None
+
+        # Garage - Stellplatz
+        try:
+            kosten_stellplatz = [x for x in kosten_l if "Garage" in x][0]
+            kosten_stellplatz = re.findall(reg, floater(kosten_stellplatz))[0]
+        except IndexError:
+            kosten_stellplatz = None
+
+        # Eigentumswohnungen können vermietet sein
+        # dann kommen Hausgeld und evtl. Mieteinnahmen hinzu
+        if "vermietet" in f_item:
+            vermietet = True
+            try:
+                mieteinnahmen = [
+                    x for x in kosten_l if "mieteinnahmen" in x
+                ][0]
+                mieteinnahmen = re.findall(reg, floater(mieteinnahmen))[0]
+            except IndexError:
+                mieteinnahmen = None
+        else:
+            vermietet = False
+            mieteinnahmen = None
+
+    # Mietwohnungen
+    else:
+        # Kaltmiete
+        miete_kalt = [x for x in kosten_l if "Kaltmiete" in x][0]
+        miete_kalt = re.findall(reg, floater(miete_kalt))[0]
+
+        # Nebenkosten
+        try:
+            nebenkosten = [x for x in kosten_l if "Nebenkosten" in x][0]
+            nebenkosten = re.findall(reg, floater(nebenkosten))[0]
+        except IndexError:
+            nebenkosten = None
+
+        # Heizkosten
+        try:
+            miete_heizkosten = [x for x in kosten_l if "Heizkosten" in x][0]
+            miete_heizkosten = re.findall(reg, floater(miete_heizkosten))[0]
+        except IndexError:
+            miete_heizkosten = None
+
+        # Kaution
+        try:
+            kaution = [x for x in kosten_l if "Kaution" in x][0]
+            kaution = re.findall(reg, floater(kaution))[0]
+        except IndexError:
+            kaution = None
+
+        # Kosten Stellplatz
+        try:
+            kosten_stellplatz = [x for x in kosten_l if "Miete für Garage" in x][0]
+            kosten_stellplatz = re.findall(reg, floater(kosten_stellplatz))[0]
+        except IndexError:
+            kosten_stellplatz = None
+
+        # Miete gesamt
+        try:
+            miete_gesamt = [x for x in kosten_l if "Gesamtmiete" in x][0]
+            miete_gesamt = re.findall(reg, floater(miete_gesamt))[0]
+        except IndexError:
+            miete_gesamt = None
 
     #################### Ausstattung #########################################
     ausstattung_l = soup.find(
@@ -522,6 +620,13 @@ def parse_expose(soup):
         else:
             barrierefrei = None
 
+        # Vermietet
+        if any(["Vermietet" in x for x in ausstattung_l]):
+            vermietet = True
+            ausstattung_l.pop(
+                ausstattung_l.index("Vermietet")
+            )
+
         # Wohnberechtigungsschein wbs
         if any(["Wohnberechtigungsschein" in x for x in ausstattung_l]):
             wbs = True
@@ -530,6 +635,22 @@ def parse_expose(soup):
             )
         else:
             wbs = None
+
+        # als Ferienwohnung geeignet
+        if any(["Ferienwohnung" in x for x in ausstattung_l]):
+            ferienwohnung_geeignet = True
+            ausstattung_l.pop(
+                ausstattung_l.index("Als Ferienwohnung geeignet")
+            )
+        else:
+            ferienwohnung_geeignet = False
+
+        # Item "Provisonsfrei" wird durch "Kosten" abgedeckt.
+        # Kann entfernt werden
+        try:
+            ausstattung_l.remove("Provisionsfrei")
+        except ValueError:
+            pass
 
         assert len(ausstattung_l) == 0
 
@@ -672,12 +793,7 @@ def parse_expose(soup):
         "titel": titel,
         "plz": plz,
         "adress_str": adress_str,
-        "miete_kalt": miete_kalt,
-        "nebenkosten": nebenkosten,
-        "miete_heizkosten": miete_heizkosten,
-        "miete_gesamt": miete_gesamt,
         "kosten_stellplatz": kosten_stellplatz,
-        "kaution": kaution,
         "wohnungs_type": wohnungs_type,
         "etage": etage,
         "etage_all": etage_all,
@@ -701,7 +817,6 @@ def parse_expose(soup):
         "garten": garten,
         "wg_geeignet": wg_geeignet,
         "barrierefrei": barrierefrei,
-        "wbs": wbs,
         "baujahr_gebaeude": baujahr_gebaeude,
         "modernisierung_jahr": modernisierung_jahr,
         "zustand": zustand,
@@ -713,8 +828,27 @@ def parse_expose(soup):
         "verfuegbar": True,
         "such_str": city
     }
-    print(ret_d)
-    print()
+
+    if wtype == "1":
+        # Items für Eigenttum hinzufügen
+        ret_d["kaufpreis"] = kaufpreis
+        ret_d["kaufnebenkosten"] = kaufnebenkosten
+        ret_d["eigenkapital"] = eigenkapital
+        ret_d["nettodarlehen"] = nettodarlehen
+        ret_d["provision"] = provision
+        ret_d["vermietet"] = vermietet
+        ret_d["mieteinnahmen"] = mieteinnahmen
+        ret_d["hausgeld"] = hausgeld
+        ret_d["ferienwohnung_geeignet"] = ferienwohnung_geeignet
+
+    else:
+        # Items für Miete hinzufügen
+        ret_d["miete_gesamt"] = miete_gesamt
+        ret_d["miete_heizkosten"] = miete_heizkosten
+        ret_d["miete_kalt"] = miete_kalt
+        ret_d["nebenkosten"] = nebenkosten
+        ret_d["kaution"] = kaution
+        ret_d["wbs"] = wbs
 
     return ret_d
 
@@ -742,9 +876,9 @@ while count <= max_page_n:
 
     # bereits geparste exposes filtern
     data_ids = [x for x in data_ids if x not in inserat_ids]
-    if len(data_ids) == 0:
-        print(f"{datetime.now()} keine neuen Inserate mehr für {city}")
-        sys.exit(0)
+    #if len(data_ids) == 0:
+    #    print(f"{datetime.now()} keine neuen Inserate mehr für {city}")
+    #    sys.exit(0)
 
     realt_items = [
         x.find("div",
@@ -761,10 +895,16 @@ while count <= max_page_n:
         soup = http_get_to_soup(expo_url + data_id + "#/")
         data = parse_expose(soup)
         data["realtor"] = realtor
-
-        cur.execute(inserat_insert_sql, data)
+        print(data)
+        print()
 
         img_data = get_image(soup)
-        cur.execute(images_insert_sql, (img_data, data_id))
+
+        if wtype == "1":
+            cur.execute(inserat_eigentum_insert_sql, data)
+            cur.execute(images_eigentum_insert_sql, (img_data, data_id))
+        else:
+            cur.execute(inserat_insert_sql, data)
+            cur.execute(images_insert_sql, (img_data, data_id))
 
     count += 1
