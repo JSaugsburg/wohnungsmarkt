@@ -98,6 +98,7 @@ inserat_ids_sql = """
     SELECT wg_gesucht_id FROM wg_gesucht.inserate
     WHERE wohnungs_type = %s;
     """
+
 # read config
 config = configparser.ConfigParser()
 config.read(script_path + "/cfg.ini")

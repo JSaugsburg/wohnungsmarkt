@@ -3,3 +3,4 @@ beautifulsoup4
 lxml
 geopandas
 psycopg2
+selenium
