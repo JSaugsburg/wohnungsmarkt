@@ -12,10 +12,10 @@ from psycopg2.extras import Json
 from requests.exceptions import HTTPError
 from requests.exceptions import TooManyRedirects
 from selenium.webdriver.common.by import By
-from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.firefox.options import Options
-from selenium.common.exceptions import NoSuchElementException
+from selenium.webdriver.support.ui import WebDriverWait
 from selenium.common.exceptions import TimeoutException
+from selenium.common.exceptions import NoSuchElementException
 from selenium.webdriver.support import expected_conditions as EC
 
 
@@ -94,9 +94,6 @@ def http_get_to_soup(url):
         print(f"Expected Content Type text/html, but got \
               {r.headers['Content-Type']} instead")
         raise TypeError
-
-def parse_inserat(soup):
-    pass
 
 # selenium Page interaktion mit Firefox headless
 options = Options()
