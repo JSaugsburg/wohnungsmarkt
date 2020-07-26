@@ -134,7 +134,10 @@ links = soup.find_all("a")
 # SPI Id  Beispiel: '/FIO-10915855820'
 p = re.compile(r"/FIO-\d*")
 fio_ids = p.findall(",".join([x.get("href") for x in links]))
-fio_ids = [x for x in fio_ids if x not in inserat_ids]
+
+# bereits bearbeitete Inserate uebersrpingen
+# x[1:] weil "/" nicht nicht ids enthalten
+fio_ids = [x[1:] for x in fio_ids if x not in inserat_ids]
 print(fio_ids)
 
 for fio in fio_ids:
