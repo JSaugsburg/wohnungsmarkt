@@ -269,6 +269,7 @@ def get_image(soup):
     return img_raw
 
 def get_date(date_s):
+    date_s = date_s.replace(",", ".")
     # manchmal werden zwei Datum angegeben
     if "/" in date_s and len([x for x in date_s if x == "/"]) == 1:
         date_s = date_s.split("/")[0].strip()
