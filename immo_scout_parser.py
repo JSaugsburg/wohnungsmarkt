@@ -321,7 +321,7 @@ def parse_expose(soup):
         "div", class_="criteriagroup criteria-group--two-columns")[0]
     details_l = [x.text for x in details.find_all("dl")]
 
-    # Filter out Schufaauskunft, Internetverfügbarkeit
+    # Filter out Internetverfügbarkeit
     exc_strs = (" Internet  Verfügbarkeit prüfen  ")
     details_l = [x for x in details_l if x not in exc_strs]
 
@@ -454,7 +454,7 @@ def parse_expose(soup):
     # bei Eigentum nach "Kaufpreis" suchen, bei Miete nach "Kaltmiete"
     if wtype == "1":
         kaufpreis = [x for x in kosten_l if "Kaufpreis" in x][0]
-        kaufpreis = int(re.findall(reg, floater(kaufpreis))[0])
+        kaufpreis = float(re.findall(reg, floater(kaufpreis))[0])
 
         # Formel für Kaufnebenkosten, Eigenkapital und Nettodarlehen
         # https://www.immobilienscout24.de/baufinanzierung/finanzierungsrechner/
@@ -667,6 +667,7 @@ def parse_expose(soup):
         wg_geeignet = None
         barrierefrei = None
         wbs = None
+        ferienwohnung_geeignet = None
 
     ############################### Bausubstanz ###############################
     s = " Bausubstanz & Energieausweis "
@@ -875,12 +876,6 @@ while count <= max_page_n:
 
     data_ids = [x.get("data-id") for x in result_l]
 
-    # bereits geparste exposes filtern
-    data_ids = [x for x in data_ids if x not in inserat_ids]
-    #if len(data_ids) == 0:
-    #    print(f"{datetime.now()} keine neuen Inserate mehr für {city}")
-    #    sys.exit(0)
-
     realt_items = [
         x.find("div",
                class_="result-list-entry__realtor-data") for x in result_l
@@ -891,7 +886,12 @@ while count <= max_page_n:
         ]) for x in realt_items
     ]
 
-    for data_id, realtor in zip(data_ids, realtors):
+    # bereits geparste exposes filtern
+    data_zipped = [
+        [x, y] for x, y in zip(data_ids, realtors) if x not in inserat_ids
+    ]
+
+    for data_id, realtor in data_zipped:
         print("Parsing expose: " + expo_url + data_id + "#/")
         soup = http_get_to_soup(expo_url + data_id + "#/")
         data = parse_expose(soup)
