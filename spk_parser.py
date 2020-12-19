@@ -49,20 +49,19 @@ conn.autocommit = True
 cur = conn.cursor()
 
 images_sql = """
-    INSERT INTO spk.images_inserate(image, id, tag)
+    INSERT INTO spk.images_inserate_json(image, id, tag)
     VALUES (%s, %s, %s);
     """
 
 inserat_sql = """
-    INSERT INTO spk.inserate (such_str, fio_id, objektkategorie, geo, preise,
-    flaechen, ausstattung, zustand_angaben, freitexte, verwaltung_objekt,
-    verwaltung_techn, anbieter, sip, wohnungs_type)
-    VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s);
+    INSERT INTO spk.inserate_json (such_str, fio_id,
+    data, wohnungs_type)
+    VALUES (%s, %s, %s, %s);
     """
 
 inserat_ids_sql = """
     SELECT fio_id
-    FROM spk.inserate;
+    FROM spk.inserate_json;
     """
 
 # get stored inserat_ids
@@ -145,43 +144,32 @@ for fio in fio_ids:
     inserat_data = json.loads(inserat.get("value"))
     inserat_data = inserat_data["estate"]
 
+
     # prepare list for insert in inserate
     preped_l = [
         city,
         inserat_data["id"],
-        Json(inserat_data["objektkategorie"]),
-        Json(inserat_data["geo"]),
-        Json(inserat_data["preise"]),
-        Json(inserat_data["flaechen"]),
-        Json(inserat_data["ausstattung"]),
-        Json(inserat_data["zustand_angaben"]),
-        Json(inserat_data["freitexte"]),
-        Json(inserat_data["verwaltung_objekt"]),
-        Json(inserat_data["verwaltung_techn"]),
-        Json(inserat_data["anbieter"]),
-        Json(inserat_data["sip"]),
+        Json(inserat_data),
         wtype
     ]
 
     cur.execute(inserat_sql, preped_l)
 
-    # get images from "anhaenge"
-    images_data = [
-        x for x in inserat_data["anhaenge"] if x["format"] in ("JPG", "PNG")
-    ]
+    # get images from "gallery"
+    g_images = inserat_data["estate"]["galleryImages"]
+    
+    # filter for only "image"
+    images_data = [x for x in g_images if x["type"] == "image"]
 
     for i in images_data:
         # multiple formats for images -> only take "original"
-        orig = [x for x in i["data"] if "original" in x]
+        orig = [x for x in i["resources"] if x["size"] == "original"]
         assert len(orig) == 1
-        orig_url = orig[0]["original"]
+        orig_url = orig[0]["url"]
         r = http_get(orig_url)
 
-        # anhangtitel sometimes missing; use attributes instead
-        try:
-            tag = i["anhangtitel"]
-        except KeyError:
-            tag = i["@attributes"]["gruppe"]
+        tag = i["description"]
+
 
         cur.execute(
             images_sql,
